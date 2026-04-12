@@ -1,0 +1,282 @@
+@{
+    ViewBag.Title = "SAP RFC Dashboard";
+}
+
+<div class="page-header">
+    <h2>SAP RFC Dashboard</h2>
+    <p>Real-time overview of all RFC integrations</p>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4" id="kpiRow">
+    <div class="col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon" style="background:#e8f0fe;color:var(--primary);">&#9632;</div>
+            <div>
+                <div class="kpi-value" id="kpiTotal">-</div>
+                <div class="kpi-label">Total RFCs</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon" style="background:#e6f4ea;color:var(--success);">&#9654;</div>
+            <div>
+                <div class="kpi-value" id="kpiActive">-</div>
+                <div class="kpi-label">Active RFCs</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon" style="background:#e8f0fe;color:var(--info);">&#9733;</div>
+            <div>
+                <div class="kpi-value" id="kpiExecToday">-</div>
+                <div class="kpi-label">Today's Executions</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon" style="background:#fce8e6;color:var(--danger);">&#9888;</div>
+            <div>
+                <div class="kpi-value" id="kpiFailed">-</div>
+                <div class="kpi-label">Failed Today</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary KPI Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon" style="background:#e8f0fe;color:var(--info);">&#8635;</div>
+            <div>
+                <div class="kpi-value" id="kpiRunning">-</div>
+                <div class="kpi-label">Currently Running</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon" style="background:#fef7e0;color:#b05a00;">&#9201;</div>
+            <div>
+                <div class="kpi-value" id="kpiAvgDuration">-</div>
+                <div class="kpi-label">Avg Duration Today</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon" style="background:#e6f4ea;color:var(--success);">&#9650;</div>
+            <div>
+                <div class="kpi-value" id="kpiRecords">-</div>
+                <div class="kpi-label">Records Moved Today</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card d-flex align-items-center gap-3">
+            <div class="kpi-icon" style="background:#f3e8fd;color:#7627bb;">&#8681;</div>
+            <div>
+                <div class="kpi-value" id="kpiExports">-</div>
+                <div class="kpi-label">Pending Exports</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card-panel">
+            <div class="card-header">Department Distribution</div>
+            <div class="card-body" id="deptChart">
+                <div class="loading-spinner">Loading...</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card-panel">
+            <div class="card-header">
+                <span>Recent Execution Trend</span>
+                <span style="font-size:0.75rem;color:var(--gray-600);font-weight:400;">Last 7 days</span>
+            </div>
+            <div class="card-body" id="trendChart">
+                <div class="loading-spinner">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Executions Table -->
+<div class="card-panel">
+    <div class="card-header">
+        <span>Recent Executions</span>
+        <a href="@Url.Action("Logs", "SapRfc")" class="btn btn-sm btn-outline">View All</a>
+    </div>
+    <div class="card-body" style="padding:0;">
+        <table class="data-table" id="recentTable">
+            <thead>
+                <tr>
+                    <th>Run ID</th>
+                    <th>RFC Name</th>
+                    <th>Status</th>
+                    <th>Duration</th>
+                    <th>Records</th>
+                    <th>Triggered By</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody id="recentBody">
+                <tr>
+                    <td colspan="7" class="loading-spinner">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section scripts {
+<style>
+    .bar-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
+    .bar-row .bar-label { min-width: 120px; font-size: 0.82rem; color: var(--gray-800); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .bar-row .bar-track { flex: 1; background: var(--gray-100); border-radius: 4px; height: 22px; position: relative; overflow: hidden; }
+    .bar-row .bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; display: flex; align-items: center; padding-left: 8px; font-size: 0.75rem; color: #fff; font-weight: 600; }
+    .bar-row .bar-count { min-width: 36px; font-size: 0.8rem; font-weight: 600; color: var(--gray-800); }
+    .trend-container { display: flex; align-items: flex-end; gap: 6px; height: 160px; padding-top: 1rem; }
+    .trend-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+    .trend-bar { width: 100%; border-radius: 4px 4px 0 0; transition: height 0.6s ease; min-height: 2px; }
+    .trend-bar.success { background: var(--success); }
+    .trend-bar.fail { background: var(--danger); }
+    .trend-label { font-size: 0.7rem; color: var(--gray-600); margin-top: 6px; white-space: nowrap; }
+    .trend-value { font-size: 0.7rem; font-weight: 600; margin-bottom: 4px; color: var(--gray-800); }
+    .trend-legend { display: flex; gap: 1rem; margin-top: 0.75rem; font-size: 0.75rem; color: var(--gray-600); }
+    .trend-legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+    .trend-legend .leg-success::before { background: var(--success); }
+    .trend-legend .leg-fail::before { background: var(--danger); }
+</style>
+<script>
+    $(function () {
+        loadSummary();
+        loadDeptDistribution();
+        loadRecent();
+        // Auto-refresh every 60 seconds
+        setInterval(function () { loadSummary(); loadRecent(); }, 60000);
+    });
+
+    function loadSummary() {
+        apiGet('/api/rfc/dashboard/summary', function (d) {
+            if (!d) return;
+            $('#kpiTotal').text(formatNumber(d.TotalRfcs));
+            $('#kpiActive').text(formatNumber(d.ActiveRfcs));
+            $('#kpiExecToday').text(formatNumber(d.TodayRuns));
+            $('#kpiFailed').text(formatNumber(d.TodayFailed));
+            $('#kpiRunning').text(formatNumber(d.TodayRunning));
+            $('#kpiAvgDuration').text(formatDuration(d.AvgDurationSec));
+            $('#kpiRecords').text(formatNumber(d.TotalRecordsToday));
+            $('#kpiExports').text(formatNumber(d.PendingExports));
+        });
+    }
+
+    function loadDeptDistribution() {
+        apiGet('/api/rfc/dashboard/dept-distribution', function (data) {
+            if (!data || data.length === 0) {
+                $('#deptChart').html('<div class="empty-state"><div class="empty-icon">&#9776;</div><p>No department data available</p></div>');
+                return;
+            }
+
+            var max = Math.max.apply(null, $.map(data, function (d) { return d.Count; }));
+            var colors = ['#1a73e8', '#34a853', '#ea4335', '#fbbc04', '#4285f4', '#ff6d01', '#46bdc6', '#ab47bc'];
+            var html = '';
+
+            $.each(data, function (i, item) {
+                var pct = max > 0 ? (item.Count / max * 100) : 0;
+                var color = colors[i % colors.length];
+                html += '<div class="bar-row">';
+                html += '  <div class="bar-label" title="' + item.Department + '">' + item.Department + '</div>';
+                html += '  <div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + color + ';">' + (pct > 15 ? item.Count : '') + '</div></div>';
+                html += '  <div class="bar-count">' + item.Count + '</div>';
+                html += '</div>';
+            });
+
+            $('#deptChart').html(html);
+        });
+    }
+
+    function loadRecent() {
+        apiGet('/api/rfc/dashboard/recent', function (data) {
+            if (!data || data.length === 0) {
+                $('#recentBody').html('<tr><td colspan="7" class="empty-state"><div class="empty-icon">&#9776;</div><p>No recent executions</p></td></tr>');
+                return;
+            }
+
+            // Build trend chart from recent data
+            buildTrendChart(data);
+
+            // Build table
+            var html = '';
+            $.each(data, function (i, r) {
+                html += '<tr>';
+                html += '<td><strong>' + (r.RunId || '-') + '</strong></td>';
+                html += '<td>' + (r.DisplayName || r.RfcCode || '-') + '</td>';
+                html += '<td>' + statusBadge(r.Status) + '</td>';
+                html += '<td>' + formatDuration(r.DurationSec) + '</td>';
+                html += '<td>' + formatNumber(r.TotalRecordsPushed) + '</td>';
+                html += '<td>' + (r.TriggeredBy || '-') + '</td>';
+                html += '<td>' + formatDate(r.StartedDt) + '</td>';
+                html += '</tr>';
+            });
+            $('#recentBody').html(html);
+        });
+    }
+
+    function buildTrendChart(recentData) {
+        // Aggregate by date for the last 7 days
+        var days = {};
+        var today = new Date();
+        for (var i = 6; i >= 0; i--) {
+            var d = new Date(today);
+            d.setDate(d.getDate() - i);
+            var key = d.toISOString().split('T')[0];
+            days[key] = { success: 0, fail: 0, label: d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) };
+        }
+
+        $.each(recentData, function (_, r) {
+            if (!r.StartedDt) return;
+            var key = new Date(r.StartedDt).toISOString().split('T')[0];
+            if (days[key]) {
+                var st = (r.Status || '').toLowerCase();
+                if (st === 'success') days[key].success++;
+                else if (st === 'failed') days[key].fail++;
+            }
+        });
+
+        var maxVal = 1;
+        $.each(days, function (_, v) {
+            var total = v.success + v.fail;
+            if (total > maxVal) maxVal = total;
+        });
+
+        var html = '<div class="trend-container">';
+        $.each(days, function (_, v) {
+            var sPct = (v.success / maxVal * 140);
+            var fPct = (v.fail / maxVal * 140);
+            var total = v.success + v.fail;
+            html += '<div class="trend-bar-wrap">';
+            html += '  <div class="trend-value">' + total + '</div>';
+            html += '  <div style="width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1;">';
+            if (v.fail > 0) html += '    <div class="trend-bar fail" style="height:' + Math.max(fPct, 2) + 'px;width:60%;"></div>';
+            html += '    <div class="trend-bar success" style="height:' + Math.max(sPct, 2) + 'px;width:60%;"></div>';
+            html += '  </div>';
+            html += '  <div class="trend-label">' + v.label + '</div>';
+            html += '</div>';
+        });
+        html += '</div>';
+        html += '<div class="trend-legend"><span class="leg-success">Success</span><span class="leg-fail">Failed</span></div>';
+
+        $('#trendChart').html(html);
+    }
+</script>
+}

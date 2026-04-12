@@ -1,0 +1,349 @@
+@{
+    ViewBag.Title = "Execution Logs";
+}
+
+<div class="page-header">
+    <h2>Execution Logs</h2>
+    <p>View and filter RFC execution history</p>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <div class="form-group">
+        <label>RFC Code</label>
+        <input type="text" id="filterRfcCode" placeholder="e.g. RFC001" />
+    </div>
+    <div class="form-group">
+        <label>Department</label>
+        <select id="filterDept">
+            <option value="">All</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Status</label>
+        <select id="filterStatus">
+            <option value="">All</option>
+            <option value="Success">Success</option>
+            <option value="Failed">Failed</option>
+            <option value="Running">Running</option>
+            <option value="Queued">Queued</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Environment</label>
+        <select id="filterEnv">
+            <option value="">All</option>
+            <option value="PROD">PROD</option>
+            <option value="UAT">UAT</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Triggered By</label>
+        <input type="text" id="filterTriggeredBy" placeholder="User name" />
+    </div>
+    <div class="form-group">
+        <label>Date From</label>
+        <input type="date" id="filterDateFrom" />
+    </div>
+    <div class="form-group">
+        <label>Date To</label>
+        <input type="date" id="filterDateTo" />
+    </div>
+    <div class="form-group">
+        <label>Run ID</label>
+        <input type="text" id="filterRunId" placeholder="#123" />
+    </div>
+    <div class="form-group" style="display:flex;gap:0.5rem;align-self:flex-end;">
+        <button class="btn btn-primary btn-sm" onclick="applyFilters()">Apply</button>
+        <button class="btn btn-sm btn-outline" onclick="clearFilters()">Clear</button>
+    </div>
+</div>
+
+<!-- Logs Table -->
+<div class="card-panel">
+    <div class="card-body" style="padding:0;overflow-x:auto;">
+        <table class="data-table" id="logsTable">
+            <thead>
+                <tr>
+                    <th style="width:30px;"></th>
+                    <th>Run ID</th>
+                    <th>RFC Code</th>
+                    <th>Display Name</th>
+                    <th>Status</th>
+                    <th>Environment</th>
+                    <th>Started</th>
+                    <th>Duration</th>
+                    <th>Records Pulled</th>
+                    <th>Records Pushed</th>
+                    <th>Error Category</th>
+                    <th>Triggered By</th>
+                </tr>
+            </thead>
+            <tbody id="logsBody">
+                <tr><td colspan="12" class="loading-spinner">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="pagination-bar" style="padding:0.75rem 1.25rem;">
+        <span id="pageInfo">-</span>
+        <div id="pageButtons"></div>
+    </div>
+</div>
+
+@section scripts {
+<style>
+    .expand-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: var(--gray-600);
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        transition: transform 0.2s;
+    }
+    .expand-btn:hover { background: var(--gray-100); }
+    .expand-btn.open { transform: rotate(90deg); }
+    .detail-row td { padding: 0 !important; background: var(--gray-50); }
+    .detail-panel {
+        padding: 1rem 1.25rem 1rem 2.5rem;
+        font-size: 0.85rem;
+    }
+    .detail-panel .error-msg {
+        background: #fce8e6;
+        color: #c5221f;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+        font-family: 'Consolas', monospace;
+        font-size: 0.8rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+    .detail-panel .sub-table {
+        width: 100%;
+        font-size: 0.82rem;
+        border-collapse: collapse;
+    }
+    .detail-panel .sub-table th {
+        background: var(--gray-100);
+        padding: 0.5rem 0.75rem;
+        font-weight: 600;
+        color: var(--gray-600);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    .detail-panel .sub-table td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--gray-100);
+    }
+    .log-row { cursor: pointer; }
+    .log-row:hover { background: #f0f4ff !important; }
+</style>
+<script>
+    var currentPage = 1;
+    var pageSize = 25;
+    var totalRows = 0;
+    var expandedRunId = null;
+
+    $(function () {
+        loadDepartments();
+        loadLogs();
+    });
+
+    function loadDepartments() {
+        apiGet('/api/rfc/master/departments', function (data) {
+            if (!data) return;
+            var sel = $('#filterDept');
+            $.each(data, function (i, d) {
+                sel.append('<option value="' + d + '">' + d + '</option>');
+            });
+        });
+    }
+
+    function getFilterParams() {
+        var params = {
+            Page: currentPage,
+            PageSize: pageSize
+        };
+        var rfcCode = $('#filterRfcCode').val().trim();
+        var dept = $('#filterDept').val();
+        var status = $('#filterStatus').val();
+        var env = $('#filterEnv').val();
+        var triggeredBy = $('#filterTriggeredBy').val().trim();
+        var dateFrom = $('#filterDateFrom').val();
+        var dateTo = $('#filterDateTo').val();
+        var runId = $('#filterRunId').val().trim();
+
+        if (rfcCode) params.RfcCode = rfcCode;
+        if (dept) params.Department = dept;
+        if (status) params.Status = status;
+        if (env) params.Environment = env;
+        if (triggeredBy) params.TriggeredBy = triggeredBy;
+        if (dateFrom) params.DateFrom = dateFrom;
+        if (dateTo) params.DateTo = dateTo;
+        if (runId) params.RunId = runId.replace('#', '');
+
+        return params;
+    }
+
+    function buildQueryString(params) {
+        var parts = [];
+        $.each(params, function (k, v) {
+            if (v != null && v !== '') parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+        });
+        return parts.join('&');
+    }
+
+    function applyFilters() {
+        currentPage = 1;
+        loadLogs();
+    }
+
+    function clearFilters() {
+        $('#filterRfcCode, #filterTriggeredBy, #filterDateFrom, #filterDateTo, #filterRunId').val('');
+        $('#filterDept, #filterStatus, #filterEnv').val('');
+        currentPage = 1;
+        loadLogs();
+    }
+
+    function loadLogs() {
+        expandedRunId = null;
+        var params = getFilterParams();
+        var qs = buildQueryString(params);
+
+        $('#logsBody').html('<tr><td colspan="12" class="loading-spinner">Loading...</td></tr>');
+
+        apiGet('/api/rfc/execution/logs?' + qs, function (result) {
+            if (!result) return;
+            totalRows = result.TotalCount || 0;
+            var rows = result.Items || [];
+
+            if (rows.length === 0) {
+                $('#logsBody').html('<tr><td colspan="12" class="empty-state">'
+                    + '<div class="empty-icon">&#9776;</div><p>No logs found</p></td></tr>');
+                $('#pageInfo').text('0 results');
+                $('#pageButtons').empty();
+                return;
+            }
+
+            var html = '';
+            $.each(rows, function (i, r) {
+                html += '<tr class="log-row" data-id="' + r.ID + '" onclick="toggleDetail(this, ' + r.ID + ')">';
+                html += '<td><button class="expand-btn" id="expandBtn_' + r.ID + '">&#9654;</button></td>';
+                html += '<td><strong>' + (r.RUN_ID || '-') + '</strong></td>';
+                html += '<td>' + (r.RFC_CODE || '-') + '</td>';
+                html += '<td>' + (r.DISPLAY_NAME || '-') + '</td>';
+                html += '<td>' + statusBadge(r.STATUS) + '</td>';
+                html += '<td>' + (r.ENVIRONMENT || '-') + '</td>';
+                html += '<td>' + formatDate(r.STARTED_DT) + '</td>';
+                html += '<td>' + formatDuration(r.DURATION_SEC) + '</td>';
+                html += '<td>' + formatNumber(r.TOTAL_RECORDS_PULLED) + '</td>';
+                html += '<td>' + formatNumber(r.TOTAL_RECORDS_PUSHED) + '</td>';
+                html += '<td>' + (r.ERROR_CATEGORY || '-') + '</td>';
+                html += '<td>' + (r.TRIGGERED_BY || '-') + '</td>';
+                html += '</tr>';
+                html += '<tr class="detail-row" id="detailRow_' + r.ID + '" style="display:none;">';
+                html += '<td colspan="12"><div class="detail-panel" id="detailPanel_' + r.ID + '">'
+                    + '<div class="loading-spinner">Loading details...</div></div></td>';
+                html += '</tr>';
+            });
+            $('#logsBody').html(html);
+            renderPagination();
+        });
+    }
+
+    function toggleDetail(row, id) {
+        var detailRow = $('#detailRow_' + id);
+        var expandBtn = $('#expandBtn_' + id);
+
+        if (expandedRunId === id) {
+            // Collapse
+            detailRow.hide();
+            expandBtn.removeClass('open');
+            expandedRunId = null;
+            return;
+        }
+
+        // Collapse previously expanded
+        if (expandedRunId !== null) {
+            $('#detailRow_' + expandedRunId).hide();
+            $('#expandBtn_' + expandedRunId).removeClass('open');
+        }
+
+        expandedRunId = id;
+        expandBtn.addClass('open');
+        detailRow.show();
+
+        // Load detail — API returns { log: {...}, details: [...] }
+        apiGet('/api/rfc/execution/logs/' + id, function (resp) {
+            if (!resp) return;
+            var logData = resp.log || {};
+            var details = resp.details || [];
+            var html = '';
+
+            var errMsg = logData.ERROR_MESSAGE;
+            if (errMsg) {
+                html += '<div class="error-msg">' + escapeHtml(errMsg) + '</div>';
+            }
+
+            if (details.length > 0) {
+                html += '<table class="sub-table">';
+                html += '<thead><tr><th>Item Key</th><th>RFC Records</th><th>SQL Records</th><th>Status</th><th>Error</th></tr></thead>';
+                html += '<tbody>';
+                $.each(details, function (i, d) {
+                    html += '<tr>';
+                    html += '<td>' + (d.ITEM_KEY || '-') + '</td>';
+                    html += '<td>' + formatNumber(d.RFC_RECORDS_PULLED) + '</td>';
+                    html += '<td>' + formatNumber(d.SQL_RECORDS_PUSHED) + '</td>';
+                    html += '<td>' + statusBadge(d.STATUS) + '</td>';
+                    html += '<td style="max-width:300px;word-break:break-word;">' + (d.ERROR_MESSAGE || '-') + '</td>';
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+            } else {
+                html += '<p style="color:var(--gray-600);">No execution detail items available.</p>';
+            }
+
+            $('#detailPanel_' + id).html(html);
+        });
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    function renderPagination() {
+        var totalPages = Math.ceil(totalRows / pageSize);
+        var from = (currentPage - 1) * pageSize + 1;
+        var to = Math.min(currentPage * pageSize, totalRows);
+        $('#pageInfo').text('Showing ' + from + '-' + to + ' of ' + formatNumber(totalRows) + ' results');
+
+        var html = '';
+        if (currentPage > 1) {
+            html += '<button class="page-btn" onclick="goToPage(' + (currentPage - 1) + ')">&laquo; Prev</button> ';
+        }
+
+        var startPage = Math.max(1, currentPage - 2);
+        var endPage = Math.min(totalPages, currentPage + 2);
+
+        for (var p = startPage; p <= endPage; p++) {
+            html += '<button class="page-btn' + (p === currentPage ? ' active' : '') + '" onclick="goToPage(' + p + ')">' + p + '</button> ';
+        }
+
+        if (currentPage < totalPages) {
+            html += '<button class="page-btn" onclick="goToPage(' + (currentPage + 1) + ')">Next &raquo;</button>';
+        }
+        $('#pageButtons').html(html);
+    }
+
+    function goToPage(p) {
+        currentPage = p;
+        loadLogs();
+    }
+</script>
+}

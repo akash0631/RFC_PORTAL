@@ -1,0 +1,240 @@
+@{
+    ViewBag.Title = "Audit Trail";
+}
+
+<div class="page-header">
+    <h2>Audit Trail</h2>
+    <p>Configuration change history</p>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <div class="form-group">
+        <label>Table Name</label>
+        <select id="filterTable">
+            <option value="">All</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Action</label>
+        <select id="filterAction">
+            <option value="">All</option>
+            <option value="Created">Created</option>
+            <option value="Updated">Updated</option>
+            <option value="Deleted">Deleted</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Changed By</label>
+        <input type="text" id="filterUser" placeholder="User name" />
+    </div>
+    <div class="form-group">
+        <label>Date From</label>
+        <input type="date" id="filterDateFrom" />
+    </div>
+    <div class="form-group">
+        <label>Date To</label>
+        <input type="date" id="filterDateTo" />
+    </div>
+    <div class="form-group">
+        <label>RFC ID</label>
+        <input type="text" id="filterRfcId" placeholder="e.g. 42" />
+    </div>
+    <div class="form-group" style="display:flex;gap:0.5rem;align-self:flex-end;">
+        <button class="btn btn-primary btn-sm" onclick="applyFilters()">Apply</button>
+        <button class="btn btn-sm btn-outline" onclick="clearFilters()">Clear</button>
+    </div>
+</div>
+
+<!-- Audit Table -->
+<div class="card-panel">
+    <div class="card-body" style="padding:0;overflow-x:auto;">
+        <table class="data-table" id="auditTable">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Table</th>
+                    <th>RFC Name</th>
+                    <th>Field</th>
+                    <th>Old Value</th>
+                    <th>New Value</th>
+                </tr>
+            </thead>
+            <tbody id="auditBody">
+                <tr><td colspan="8" class="loading-spinner">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="pagination-bar" style="padding:0.75rem 1.25rem;">
+        <span id="pageInfo">-</span>
+        <div id="pageButtons"></div>
+    </div>
+</div>
+
+@section scripts {
+<style>
+    .badge-action-created { background: #e6f4ea; color: #137333; }
+    .badge-action-updated { background: #e8f0fe; color: #1967d2; }
+    .badge-action-deleted { background: #fce8e6; color: #c5221f; }
+    .val-old {
+        background: #fce8e6;
+        color: #c5221f;
+        padding: 0.15rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-family: 'Consolas', monospace;
+        display: inline-block;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .val-new {
+        background: #e6f4ea;
+        color: #137333;
+        padding: 0.15rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-family: 'Consolas', monospace;
+        display: inline-block;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style>
+<script>
+    var currentPage = 1;
+    var pageSize = 25;
+    var totalRows = 0;
+
+    $(function () {
+        loadAudit();
+    });
+
+    function getFilterParams() {
+        var params = {
+            Page: currentPage,
+            PageSize: pageSize
+        };
+        var table = $('#filterTable').val();
+        var action = $('#filterAction').val();
+        var user = $('#filterUser').val().trim();
+        var dateFrom = $('#filterDateFrom').val();
+        var dateTo = $('#filterDateTo').val();
+        var rfcId = $('#filterRfcId').val().trim();
+
+        if (table) params.TableName = table;
+        if (action) params.Action = action;
+        if (user) params.ChangedBy = user;
+        if (dateFrom) params.DateFrom = dateFrom;
+        if (dateTo) params.DateTo = dateTo;
+        if (rfcId) params.RfcId = rfcId;
+
+        return params;
+    }
+
+    function buildQueryString(params) {
+        var parts = [];
+        $.each(params, function (k, v) {
+            if (v != null && v !== '') parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+        });
+        return parts.join('&');
+    }
+
+    function applyFilters() {
+        currentPage = 1;
+        loadAudit();
+    }
+
+    function clearFilters() {
+        $('#filterTable, #filterAction').val('');
+        $('#filterUser, #filterDateFrom, #filterDateTo, #filterRfcId').val('');
+        currentPage = 1;
+        loadAudit();
+    }
+
+    function actionBadge(action) {
+        var cls = { 'Created': 'created', 'Updated': 'updated', 'Deleted': 'deleted' };
+        return '<span class="badge-status badge-action-' + (cls[action] || 'updated') + '">' + (action || '-') + '</span>';
+    }
+
+    function loadAudit() {
+        var params = getFilterParams();
+        var qs = buildQueryString(params);
+
+        $('#auditBody').html('<tr><td colspan="8" class="loading-spinner">Loading...</td></tr>');
+
+        apiGet('/api/rfc/audit?' + qs, function (result) {
+            if (!result) return;
+            totalRows = result.TotalCount || 0;
+            var rows = result.Items || [];
+
+            if (rows.length === 0) {
+                $('#auditBody').html('<tr><td colspan="8" class="empty-state">'
+                    + '<div class="empty-icon">&#9998;</div><p>No audit records found</p></td></tr>');
+                $('#pageInfo').text('0 results');
+                $('#pageButtons').empty();
+                return;
+            }
+
+            var html = '';
+            $.each(rows, function (i, r) {
+                html += '<tr>';
+                html += '<td>' + formatDate(r.CHANGED_DT) + '</td>';
+                html += '<td>' + (r.CHANGED_BY || '-') + '</td>';
+                html += '<td>' + actionBadge(r.ACTION) + '</td>';
+                html += '<td>' + (r.TABLE_NAME || '-') + '</td>';
+                html += '<td>' + (r.RFC_NAME || r.RFC_ID || '-') + '</td>';
+                html += '<td>' + (r.FIELD_NAME || '-') + '</td>';
+                html += '<td>' + (r.OLD_VALUE ? '<span class="val-old" title="' + escapeAttr(r.OLD_VALUE) + '">' + escapeHtml(r.OLD_VALUE) + '</span>' : '-') + '</td>';
+                html += '<td>' + (r.NEW_VALUE ? '<span class="val-new" title="' + escapeAttr(r.NEW_VALUE) + '">' + escapeHtml(r.NEW_VALUE) + '</span>' : '-') + '</td>';
+                html += '</tr>';
+            });
+            $('#auditBody').html(html);
+            renderPagination();
+        });
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    function escapeAttr(text) {
+        return String(text).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function renderPagination() {
+        var totalPages = Math.ceil(totalRows / pageSize);
+        var from = (currentPage - 1) * pageSize + 1;
+        var to = Math.min(currentPage * pageSize, totalRows);
+        $('#pageInfo').text('Showing ' + from + '-' + to + ' of ' + formatNumber(totalRows) + ' results');
+
+        var html = '';
+        if (currentPage > 1) {
+            html += '<button class="page-btn" onclick="goToPage(' + (currentPage - 1) + ')">&laquo; Prev</button> ';
+        }
+
+        var startPage = Math.max(1, currentPage - 2);
+        var endPage = Math.min(totalPages, currentPage + 2);
+
+        for (var p = startPage; p <= endPage; p++) {
+            html += '<button class="page-btn' + (p === currentPage ? ' active' : '') + '" onclick="goToPage(' + p + ')">' + p + '</button> ';
+        }
+
+        if (currentPage < totalPages) {
+            html += '<button class="page-btn" onclick="goToPage(' + (currentPage + 1) + ')">Next &raquo;</button>';
+        }
+        $('#pageButtons').html(html);
+    }
+
+    function goToPage(p) {
+        currentPage = p;
+        loadAudit();
+    }
+</script>
+}

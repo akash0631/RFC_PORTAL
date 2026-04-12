@@ -1,0 +1,405 @@
+@{
+    ViewBag.Title = "Data Explorer";
+}
+
+<div class="page-header d-flex justify-content-between align-items-start">
+    <div>
+        <h2>Data Explorer</h2>
+        <p>Browse and export Snowflake table data</p>
+    </div>
+    <button class="btn btn-primary btn-sm" id="btnExport" style="display:none;" onclick="exportData()">
+        &#11123; Export
+    </button>
+</div>
+
+<!-- Table Selector -->
+<div class="filter-bar">
+    <div class="form-group" style="flex:1;max-width:400px;">
+        <label>Select Table</label>
+        <select id="tableSelect" style="width:100%;" onchange="onTableSelected()">
+            <option value="">-- Choose a table --</option>
+        </select>
+    </div>
+    <div class="form-group" id="rowCountInfo" style="display:none;">
+        <label>Total Rows</label>
+        <span id="rowCountValue" style="font-size:0.95rem;font-weight:600;color:var(--gray-900);"></span>
+    </div>
+</div>
+
+<!-- Column Info Chips -->
+<div id="columnChips" style="display:none;margin-bottom:1rem;">
+    <div class="card-panel">
+        <div class="card-header">
+            <span>Columns</span>
+            <span id="colCount" style="font-size:0.75rem;color:var(--gray-600);font-weight:400;"></span>
+        </div>
+        <div class="card-body" id="chipContainer" style="display:flex;flex-wrap:wrap;gap:0.5rem;padding:1rem 1.25rem;">
+        </div>
+    </div>
+</div>
+
+<!-- Filter Builder -->
+<div id="filterSection" style="display:none;">
+    <div class="card-panel">
+        <div class="card-header">
+            <span>Filters</span>
+            <button class="btn btn-sm btn-outline" onclick="addFilterRow()">+ Add Filter</button>
+        </div>
+        <div class="card-body">
+            <div id="filterRows"></div>
+            <div style="margin-top:0.75rem;">
+                <button class="btn btn-primary btn-sm" onclick="applyFilters()">Apply Filters</button>
+                <button class="btn btn-sm btn-outline" onclick="clearFilters()">Clear</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Grid -->
+<div id="dataGridSection" style="display:none;">
+    <div class="card-panel">
+        <div class="card-body" style="padding:0;overflow-x:auto;">
+            <table class="data-table" id="dataTable">
+                <thead id="dataHead"></thead>
+                <tbody id="dataBody">
+                    <tr><td class="empty-state" colspan="1">Select a table to view data</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination-bar" id="paginationBar" style="padding:0.75rem 1.25rem;">
+            <span id="pageInfo">-</span>
+            <div id="pageButtons"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Job Status -->
+<div id="exportJobStatus" style="display:none;">
+    <div class="card-panel">
+        <div class="card-header">Export Job Status</div>
+        <div class="card-body">
+            <p>Job ID: <strong id="exportJobId"></strong></p>
+            <p>Status: <span id="exportJobStatusBadge"></span></p>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+<style>
+    .col-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: var(--gray-100);
+        border: 1px solid var(--gray-200);
+        border-radius: 16px;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.8rem;
+        color: var(--gray-800);
+    }
+    .col-chip .chip-type {
+        font-size: 0.7rem;
+        color: var(--gray-600);
+        font-style: italic;
+    }
+    .filter-row {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    .filter-row select, .filter-row input {
+        font-size: 0.85rem;
+        border-radius: 6px;
+        border: 1px solid var(--gray-200);
+        padding: 0.4rem 0.6rem;
+    }
+    .filter-row .filter-col { min-width: 160px; }
+    .filter-row .filter-op { min-width: 120px; }
+    .filter-row .filter-val { min-width: 180px; flex: 1; }
+    .remove-filter {
+        background: none;
+        border: none;
+        color: var(--danger);
+        cursor: pointer;
+        font-size: 1.1rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+    }
+    .remove-filter:hover { background: #fce8e6; }
+    #dataTable thead th.sorted-asc::after { content: ' \25B2'; font-size: 0.65rem; }
+    #dataTable thead th.sorted-desc::after { content: ' \25BC'; font-size: 0.65rem; }
+</style>
+<script>
+    var columns = [];
+    var currentTable = '';
+    var currentPage = 1;
+    var pageSize = 50;
+    var sortBy = '';
+    var sortDir = 'ASC';
+    var totalRows = 0;
+
+    $(function () {
+        loadTables();
+    });
+
+    function loadTables() {
+        apiGet('/api/rfc/data/tables', function (data) {
+            var sel = $('#tableSelect');
+            sel.find('option:not(:first)').remove();
+            $.each(data, function (i, t) {
+                sel.append('<option value="' + t.TABLE_NAME + '" data-rows="' + (t.ROW_COUNT || 0) + '">'
+                    + t.TABLE_NAME + ' (' + formatNumber(t.ROW_COUNT) + ' rows)</option>');
+            });
+        });
+    }
+
+    function onTableSelected() {
+        var sel = $('#tableSelect');
+        currentTable = sel.val();
+        if (!currentTable) {
+            $('#columnChips, #filterSection, #dataGridSection, #btnExport').hide();
+            return;
+        }
+
+        var rowCount = sel.find(':selected').data('rows');
+        $('#rowCountValue').text(formatNumber(rowCount));
+        $('#rowCountInfo').show();
+        $('#btnExport').show();
+
+        // Reset state
+        currentPage = 1;
+        sortBy = '';
+        sortDir = 'ASC';
+        $('#filterRows').empty();
+
+        loadColumns();
+    }
+
+    function loadColumns() {
+        apiGet('/api/rfc/data/' + encodeURIComponent(currentTable) + '/columns', function (data) {
+            columns = data;
+
+            // Render chips
+            var html = '';
+            $.each(data, function (i, col) {
+                html += '<span class="col-chip">' + col.COLUMN_NAME
+                    + ' <span class="chip-type">' + col.DATA_TYPE + '</span></span>';
+            });
+            $('#chipContainer').html(html);
+            $('#colCount').text(data.length + ' columns');
+            $('#columnChips').show();
+            $('#filterSection').show();
+            $('#dataGridSection').show();
+
+            loadData();
+        });
+    }
+
+    function addFilterRow() {
+        var colOpts = '<option value="">-- Column --</option>';
+        $.each(columns, function (i, col) {
+            colOpts += '<option value="' + col.COLUMN_NAME + '">' + col.COLUMN_NAME + '</option>';
+        });
+
+        var html = '<div class="filter-row">';
+        html += '<select class="filter-col">' + colOpts + '</select>';
+        html += '<select class="filter-op">';
+        html += '<option value="Equals">Equals</option>';
+        html += '<option value="Contains">Contains</option>';
+        html += '<option value="GT">Greater Than</option>';
+        html += '<option value="LT">Less Than</option>';
+        html += '</select>';
+        html += '<input type="text" class="filter-val" placeholder="Value" />';
+        html += '<button class="remove-filter" onclick="$(this).closest(\'.filter-row\').remove();" title="Remove">&times;</button>';
+        html += '</div>';
+        $('#filterRows').append(html);
+    }
+
+    function getFilters() {
+        var filters = [];
+        $('#filterRows .filter-row').each(function () {
+            var col = $(this).find('.filter-col').val();
+            var op = $(this).find('.filter-op').val();
+            var val = $(this).find('.filter-val').val();
+            if (col && val) {
+                filters.push({ Column: col, Operator: op, Value: val });
+            }
+        });
+        return filters;
+    }
+
+    function applyFilters() {
+        currentPage = 1;
+        loadData();
+    }
+
+    function clearFilters() {
+        $('#filterRows').empty();
+        currentPage = 1;
+        loadData();
+    }
+
+    function loadData() {
+        if (!currentTable) return;
+
+        var filters = getFilters();
+        var payload = {
+            Page: currentPage,
+            PageSize: pageSize,
+            SortBy: sortBy,
+            SortDir: sortDir,
+            FilterJson: filters.length > 0 ? JSON.stringify(filters) : null
+        };
+
+        // Build header
+        var headHtml = '<tr>';
+        $.each(columns, function (i, col) {
+            var cls = '';
+            if (sortBy === col.COLUMN_NAME) {
+                cls = sortDir === 'ASC' ? 'sorted-asc' : 'sorted-desc';
+            }
+            headHtml += '<th class="' + cls + '" data-col="' + col.COLUMN_NAME + '" onclick="toggleSort(\'' + col.COLUMN_NAME + '\')">'
+                + col.COLUMN_NAME + '</th>';
+        });
+        headHtml += '</tr>';
+        $('#dataHead').html(headHtml);
+
+        $('#dataBody').html('<tr><td colspan="' + columns.length + '" class="loading-spinner">Loading...</td></tr>');
+
+        apiPost('/api/rfc/data/' + encodeURIComponent(currentTable) + '/query', payload, function (result) {
+            totalRows = result.TotalCount || 0;
+            var rows = result.Data || [];
+
+            if (rows.length === 0) {
+                $('#dataBody').html('<tr><td colspan="' + columns.length + '" class="empty-state">'
+                    + '<div class="empty-icon">&#9707;</div><p>No data found</p></td></tr>');
+                $('#pageInfo').text('0 rows');
+                $('#pageButtons').empty();
+                return;
+            }
+
+            var html = '';
+            $.each(rows, function (i, row) {
+                html += '<tr>';
+                $.each(columns, function (j, col) {
+                    var val = row[col.COLUMN_NAME];
+                    html += '<td>' + (val != null ? val : '<span style="color:var(--gray-600);font-style:italic;">NULL</span>') + '</td>';
+                });
+                html += '</tr>';
+            });
+            $('#dataBody').html(html);
+
+            renderPagination();
+        });
+    }
+
+    function toggleSort(colName) {
+        if (sortBy === colName) {
+            sortDir = sortDir === 'ASC' ? 'DESC' : 'ASC';
+        } else {
+            sortBy = colName;
+            sortDir = 'ASC';
+        }
+        loadData();
+    }
+
+    function renderPagination() {
+        var totalPages = Math.ceil(totalRows / pageSize);
+        var from = (currentPage - 1) * pageSize + 1;
+        var to = Math.min(currentPage * pageSize, totalRows);
+        $('#pageInfo').text('Showing ' + from + '-' + to + ' of ' + formatNumber(totalRows) + ' rows');
+
+        var html = '';
+        if (currentPage > 1) {
+            html += '<button class="page-btn" onclick="goToPage(' + (currentPage - 1) + ')">&laquo; Prev</button> ';
+        }
+
+        var startPage = Math.max(1, currentPage - 2);
+        var endPage = Math.min(totalPages, currentPage + 2);
+
+        for (var p = startPage; p <= endPage; p++) {
+            html += '<button class="page-btn' + (p === currentPage ? ' active' : '') + '" onclick="goToPage(' + p + ')">' + p + '</button> ';
+        }
+
+        if (currentPage < totalPages) {
+            html += '<button class="page-btn" onclick="goToPage(' + (currentPage + 1) + ')">Next &raquo;</button>';
+        }
+        $('#pageButtons').html(html);
+    }
+
+    function goToPage(p) {
+        currentPage = p;
+        loadData();
+    }
+
+    function exportData() {
+        if (!currentTable) return;
+
+        var filters = getFilters();
+        var payload = {
+            TableName: currentTable,
+            FilterJson: filters.length > 0 ? JSON.stringify(filters) : null
+        };
+
+        $.ajax({
+            url: '/api/rfc/export',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            xhrFields: { responseType: 'blob' },
+            success: function (data, status, xhr) {
+                var contentType = xhr.getResponseHeader('Content-Type');
+                if (contentType && contentType.indexOf('application/json') !== -1) {
+                    // Async response - read blob as text
+                    var reader = new FileReader();
+                    reader.onload = function () {
+                        var result = JSON.parse(reader.result);
+                        showToast('Export queued, Job ID: ' + result.JobId, 'success');
+                        $('#exportJobId').text(result.JobId);
+                        $('#exportJobStatusBadge').html(statusBadge('Queued'));
+                        $('#exportJobStatus').show();
+                        pollExportStatus(result.JobId);
+                    };
+                    reader.readAsText(data);
+                } else {
+                    // Sync - file download
+                    var disposition = xhr.getResponseHeader('Content-Disposition');
+                    var filename = currentTable + '_export.csv';
+                    if (disposition) {
+                        var match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                        if (match && match[1]) filename = match[1].replace(/['"]/g, '');
+                    }
+                    var url = window.URL.createObjectURL(data);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                    showToast('Export downloaded successfully', 'success');
+                }
+            },
+            error: function (xhr) {
+                showToast('Export failed: ' + (xhr.responseJSON?.Message || xhr.statusText), 'error');
+            }
+        });
+    }
+
+    function pollExportStatus(jobId) {
+        var interval = setInterval(function () {
+            apiGet('/api/rfc/export/status/' + jobId, function (result) {
+                $('#exportJobStatusBadge').html(statusBadge(result.Status));
+                if (result.Status === 'Success' || result.Status === 'Completed') {
+                    clearInterval(interval);
+                    showToast('Export completed for Job ID: ' + jobId, 'success');
+                } else if (result.Status === 'Failed') {
+                    clearInterval(interval);
+                    showToast('Export failed for Job ID: ' + jobId, 'error');
+                }
+            });
+        }, 3000);
+    }
+</script>
+}

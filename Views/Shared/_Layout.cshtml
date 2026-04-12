@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - RFC Portal</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #1557b0;
+            --success: #34a853;
+            --danger: #ea4335;
+            --warning: #fbbc04;
+            --info: #4285f4;
+            --gray-50: #f8f9fa;
+            --gray-100: #f1f3f4;
+            --gray-200: #e8eaed;
+            --gray-600: #5f6368;
+            --gray-800: #3c4043;
+            --gray-900: #202124;
+            --sidebar-width: 250px;
+        }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--gray-50); margin: 0; }
+        .top-navbar { background: var(--gray-900) !important; padding: 0 1.5rem; min-height: 56px; }
+        .top-navbar .navbar-brand { font-weight: 600; font-size: 1.1rem; color: #fff !important; letter-spacing: -0.3px; }
+        .top-navbar .nav-link { color: rgba(255,255,255,0.8) !important; font-size: 0.875rem; padding: 1rem 0.75rem; transition: color 0.15s; }
+        .top-navbar .nav-link:hover, .top-navbar .nav-link.active { color: #fff !important; border-bottom: 2px solid var(--primary); }
+        .sidebar { position: fixed; top: 56px; left: 0; width: var(--sidebar-width); height: calc(100vh - 56px); background: #fff; border-right: 1px solid var(--gray-200); overflow-y: auto; z-index: 100; transition: transform 0.2s; }
+        .sidebar .nav-section { padding: 1rem 0 0.25rem 1rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--gray-600); font-weight: 600; }
+        .sidebar .nav-link { color: var(--gray-800); font-size: 0.875rem; padding: 0.5rem 1rem 0.5rem 1.25rem; display: flex; align-items: center; gap: 0.6rem; border-radius: 0 24px 24px 0; margin-right: 0.75rem; transition: background 0.15s; }
+        .sidebar .nav-link:hover { background: var(--gray-100); }
+        .sidebar .nav-link.active { background: #e8f0fe; color: var(--primary); font-weight: 600; }
+        .sidebar .nav-icon { width: 20px; text-align: center; font-size: 1rem; }
+        .main-content { margin-left: var(--sidebar-width); margin-top: 56px; padding: 1.5rem 2rem; min-height: calc(100vh - 56px); }
+        .page-header { margin-bottom: 1.5rem; }
+        .page-header h2 { font-size: 1.5rem; font-weight: 600; color: var(--gray-900); margin: 0; }
+        .page-header p { color: var(--gray-600); margin: 0.25rem 0 0; font-size: 0.875rem; }
+        .kpi-card { background: #fff; border-radius: 12px; padding: 1.25rem; border: 1px solid var(--gray-200); transition: box-shadow 0.15s; }
+        .kpi-card:hover { box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
+        .kpi-card .kpi-value { font-size: 2rem; font-weight: 700; line-height: 1.1; }
+        .kpi-card .kpi-label { font-size: 0.8rem; color: var(--gray-600); margin-top: 0.25rem; }
+        .kpi-card .kpi-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; }
+        .card-panel { background: #fff; border-radius: 12px; border: 1px solid var(--gray-200); margin-bottom: 1.5rem; }
+        .card-panel .card-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--gray-200); font-weight: 600; font-size: 0.95rem; background: transparent; display: flex; justify-content: space-between; align-items: center; }
+        .card-panel .card-body { padding: 1.25rem; }
+        .badge-status { font-size: 0.75rem; padding: 0.3em 0.75em; border-radius: 12px; font-weight: 500; }
+        .badge-success { background: #e6f4ea; color: #137333; }
+        .badge-danger { background: #fce8e6; color: #c5221f; }
+        .badge-warning { background: #fef7e0; color: #b05a00; }
+        .badge-info { background: #e8f0fe; color: #1967d2; }
+        .badge-secondary { background: var(--gray-100); color: var(--gray-600); }
+        .badge-running { background: #e8f0fe; color: #1967d2; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .data-table { width: 100%; font-size: 0.875rem; }
+        .data-table thead th { background: var(--gray-50); padding: 0.75rem; font-weight: 600; color: var(--gray-600); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 2px solid var(--gray-200); white-space: nowrap; cursor: pointer; }
+        .data-table thead th:hover { color: var(--gray-900); }
+        .data-table tbody td { padding: 0.75rem; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+        .data-table tbody tr:hover { background: var(--gray-50); }
+        .btn-primary { background: var(--primary); border-color: var(--primary); border-radius: 6px; font-size: 0.875rem; font-weight: 500; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-sm { padding: 0.3rem 0.75rem; font-size: 0.8rem; border-radius: 6px; }
+        .btn-outline { background: transparent; border: 1px solid var(--gray-200); color: var(--gray-800); border-radius: 6px; }
+        .btn-outline:hover { background: var(--gray-100); }
+        .filter-bar { background: #fff; border-radius: 12px; border: 1px solid var(--gray-200); padding: 1rem 1.25rem; margin-bottom: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: end; }
+        .filter-bar .form-group { margin: 0; }
+        .filter-bar label { font-size: 0.75rem; font-weight: 600; color: var(--gray-600); margin-bottom: 0.25rem; display: block; }
+        .filter-bar select, .filter-bar input { font-size: 0.85rem; border-radius: 6px; border: 1px solid var(--gray-200); padding: 0.4rem 0.6rem; min-width: 140px; }
+        .pagination-bar { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; font-size: 0.85rem; color: var(--gray-600); }
+        .pagination-bar .page-btn { border: 1px solid var(--gray-200); background: #fff; padding: 0.35rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+        .pagination-bar .page-btn:hover { background: var(--gray-100); }
+        .pagination-bar .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .tab-nav { display: flex; border-bottom: 2px solid var(--gray-200); margin-bottom: 1.5rem; }
+        .tab-nav .tab-item { padding: 0.75rem 1.25rem; font-size: 0.875rem; color: var(--gray-600); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+        .tab-nav .tab-item:hover { color: var(--gray-900); }
+        .tab-nav .tab-item.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+        .empty-state { text-align: center; padding: 3rem; color: var(--gray-600); }
+        .empty-state .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+        .loading-spinner { text-align: center; padding: 2rem; color: var(--gray-600); }
+        .action-btn { background: none; border: none; color: var(--gray-600); cursor: pointer; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem; }
+        .action-btn:hover { background: var(--gray-100); color: var(--gray-900); }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal-box { background: #fff; border-radius: 12px; padding: 1.5rem; min-width: 500px; max-width: 700px; max-height: 80vh; overflow-y: auto; }
+        .toast-container { position: fixed; top: 70px; right: 20px; z-index: 2000; }
+        .toast { padding: 0.75rem 1.25rem; border-radius: 8px; color: #fff; font-size: 0.875rem; margin-bottom: 0.5rem; animation: slideIn 0.3s; }
+        .toast-success { background: var(--success); }
+        .toast-error { background: var(--danger); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        footer { margin-top: 2rem; padding: 1rem 0; font-size: 0.8rem; color: var(--gray-600); border-top: 1px solid var(--gray-200); }
+        @@media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-sm top-navbar fixed-top">
+        <div class="container-fluid">
+            @Html.ActionLink("RFC Portal", "Index", "SapRfc", new { area = "" }, new { @class = "navbar-brand" })
+            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">@Html.ActionLink("Home", "Index", "Home", null, new { @class = "nav-link" })</li>
+                    <li class="nav-item">@Html.ActionLink("SAP RFC", "Index", "SapRfc", null, new { @class = "nav-link active" })</li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <aside class="sidebar" id="sidebar">
+        <nav class="mt-2">
+            <div class="nav-section">Overview</div>
+            <a href="@Url.Action("Index", "SapRfc")" class="nav-link @(ViewContext.RouteData.Values["action"].ToString() == "Index" && ViewContext.RouteData.Values["controller"].ToString() == "SapRfc" ? "active" : "")">
+                <span class="nav-icon">&#9632;</span> Dashboard
+            </a>
+
+            <div class="nav-section">Management</div>
+            <a href="@Url.Action("Integrations", "SapRfc")" class="nav-link @(ViewContext.RouteData.Values["action"].ToString() == "Integrations" ? "active" : "")">
+                <span class="nav-icon">&#9776;</span> RFC Integrations
+            </a>
+            <a href="@Url.Action("Connections", "SapRfc")" class="nav-link @(ViewContext.RouteData.Values["action"].ToString() == "Connections" ? "active" : "")">
+                <span class="nav-icon">&#9889;</span> SAP Connections
+            </a>
+
+            <div class="nav-section">Data</div>
+            <a href="@Url.Action("DataExplorer", "SapRfc")" class="nav-link @(ViewContext.RouteData.Values["action"].ToString() == "DataExplorer" ? "active" : "")">
+                <span class="nav-icon">&#9707;</span> Data Explorer
+            </a>
+
+            <div class="nav-section">Monitoring</div>
+            <a href="@Url.Action("Logs", "SapRfc")" class="nav-link @(ViewContext.RouteData.Values["action"].ToString() == "Logs" ? "active" : "")">
+                <span class="nav-icon">&#9776;</span> Execution Logs
+            </a>
+            <a href="@Url.Action("Audit", "SapRfc")" class="nav-link @(ViewContext.RouteData.Values["action"].ToString() == "Audit" ? "active" : "")">
+                <span class="nav-icon">&#9998;</span> Audit Trail
+            </a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        @RenderBody()
+        <footer>
+            <p>RFC Portal &copy; @DateTime.Now.Year &mdash; V2 Retail</p>
+        </footer>
+    </main>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    @Scripts.Render("~/bundles/jquery")
+    @Scripts.Render("~/bundles/bootstrap")
+    <script>
+        function showToast(msg, type) {
+            var c = document.getElementById('toastContainer');
+            var t = document.createElement('div');
+            t.className = 'toast toast-' + (type || 'success');
+            t.textContent = msg;
+            c.appendChild(t);
+            setTimeout(function () { t.remove(); }, 4000);
+        }
+        function apiGet(url, cb) {
+            $.get(url).done(function (d) { cb(d); }).fail(function (x) { showToast('Error: ' + (x.responseJSON?.Message || x.statusText), 'error'); });
+        }
+        function apiPost(url, data, cb) {
+            $.ajax({ url: url, type: 'POST', contentType: 'application/json', data: JSON.stringify(data) })
+             .done(function (d) { cb(d); }).fail(function (x) { showToast('Error: ' + (x.responseJSON?.Message || x.statusText), 'error'); });
+        }
+        function apiPut(url, data, cb) {
+            $.ajax({ url: url, type: 'PUT', contentType: 'application/json', data: JSON.stringify(data) })
+             .done(function (d) { cb(d); }).fail(function (x) { showToast('Error: ' + (x.responseJSON?.Message || x.statusText), 'error'); });
+        }
+        function apiDelete(url, cb) {
+            $.ajax({ url: url, type: 'DELETE' })
+             .done(function (d) { cb(d); }).fail(function (x) { showToast('Error: ' + (x.responseJSON?.Message || x.statusText), 'error'); });
+        }
+        function apiPatch(url, cb) {
+            $.ajax({ url: url, type: 'PATCH' })
+             .done(function (d) { cb(d); }).fail(function (x) { showToast('Error: ' + (x.responseJSON?.Message || x.statusText), 'error'); });
+        }
+        function formatDuration(sec) {
+            if (!sec && sec !== 0) return '-';
+            sec = Number(sec);
+            if (sec < 60) return sec + 's';
+            if (sec < 3600) { var m = Math.floor(sec / 60), s = sec % 60; return m + 'm ' + s + 's'; }
+            var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
+            return h + 'h ' + m + 'm';
+        }
+        function formatNumber(n) { return n != null ? Number(n).toLocaleString() : '-'; }
+        function formatDate(d) {
+            if (!d) return '-';
+            var dt = new Date(d);
+            if (isNaN(dt)) return d;
+            return dt.toLocaleDateString('en-IN') + ' ' + dt.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'});
+        }
+        function statusBadge(s) {
+            if (!s) return '<span class="badge-status badge-secondary">-</span>';
+            var map = {'success':'success','failed':'danger','running':'running','queued':'info','active':'success','inactive':'secondary','ready':'success','processing':'info','error':'danger'};
+            var cls = map[s.toLowerCase()] || 'secondary';
+            return '<span class="badge-status badge-' + cls + '">' + s + '</span>';
+        }
+        // Safe accessor for Snowflake UPPER_CASE or PascalCase keys
+        function V(obj, key) {
+            if (!obj) return null;
+            return obj[key] !== undefined ? obj[key] : (obj[key.toUpperCase()] !== undefined ? obj[key.toUpperCase()] : null);
+        }
+    </script>
+    @RenderSection("scripts", required: false)
+</body>
+</html>

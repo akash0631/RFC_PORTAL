@@ -1,0 +1,90 @@
+D:\AKASH\RFC PORTAL\bin\RFC PORTAL.dll.config
+D:\AKASH\RFC PORTAL\bin\RFC PORTAL.dll
+D:\AKASH\RFC PORTAL\bin\RFC PORTAL.pdb
+D:\AKASH\RFC PORTAL\bin\roslyn\csc.exe
+D:\AKASH\RFC PORTAL\bin\roslyn\csc.exe.config
+D:\AKASH\RFC PORTAL\bin\roslyn\csc.rsp
+D:\AKASH\RFC PORTAL\bin\roslyn\csi.exe
+D:\AKASH\RFC PORTAL\bin\roslyn\csi.exe.config
+D:\AKASH\RFC PORTAL\bin\roslyn\csi.rsp
+D:\AKASH\RFC PORTAL\bin\roslyn\Microsoft.Build.Tasks.CodeAnalysis.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\Microsoft.CodeAnalysis.CSharp.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\Microsoft.CodeAnalysis.CSharp.Scripting.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\Microsoft.CodeAnalysis.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\Microsoft.CodeAnalysis.Scripting.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\Microsoft.CodeAnalysis.VisualBasic.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\Microsoft.CSharp.Core.targets
+D:\AKASH\RFC PORTAL\bin\roslyn\Microsoft.DiaSymReader.Native.amd64.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\Microsoft.DiaSymReader.Native.x86.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\Microsoft.Managed.Core.targets
+D:\AKASH\RFC PORTAL\bin\roslyn\Microsoft.VisualBasic.Core.targets
+D:\AKASH\RFC PORTAL\bin\roslyn\Microsoft.Win32.Primitives.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.AppContext.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Collections.Immutable.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Console.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Diagnostics.DiagnosticSource.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Diagnostics.FileVersionInfo.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Diagnostics.StackTrace.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Globalization.Calendars.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.IO.Compression.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.IO.Compression.ZipFile.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.IO.FileSystem.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.IO.FileSystem.Primitives.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Net.Http.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Net.Sockets.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Reflection.Metadata.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Runtime.InteropServices.RuntimeInformation.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Security.Cryptography.Algorithms.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Security.Cryptography.Encoding.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Security.Cryptography.Primitives.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Security.Cryptography.X509Certificates.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Text.Encoding.CodePages.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Threading.Tasks.Extensions.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.ValueTuple.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Xml.ReaderWriter.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Xml.XmlDocument.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Xml.XPath.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\System.Xml.XPath.XDocument.dll
+D:\AKASH\RFC PORTAL\bin\roslyn\vbc.exe
+D:\AKASH\RFC PORTAL\bin\roslyn\vbc.exe.config
+D:\AKASH\RFC PORTAL\bin\roslyn\vbc.rsp
+D:\AKASH\RFC PORTAL\bin\roslyn\VBCSCompiler.exe
+D:\AKASH\RFC PORTAL\bin\roslyn\VBCSCompiler.exe.config
+D:\AKASH\RFC PORTAL\bin\Antlr3.Runtime.dll
+D:\AKASH\RFC PORTAL\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll
+D:\AKASH\RFC PORTAL\bin\Microsoft.Web.Infrastructure.dll
+D:\AKASH\RFC PORTAL\bin\Newtonsoft.Json.dll
+D:\AKASH\RFC PORTAL\bin\System.Net.Http.Formatting.dll
+D:\AKASH\RFC PORTAL\bin\System.Web.Helpers.dll
+D:\AKASH\RFC PORTAL\bin\System.Web.Http.dll
+D:\AKASH\RFC PORTAL\bin\System.Web.Http.WebHost.dll
+D:\AKASH\RFC PORTAL\bin\System.Web.Mvc.dll
+D:\AKASH\RFC PORTAL\bin\System.Web.Optimization.dll
+D:\AKASH\RFC PORTAL\bin\System.Web.Razor.dll
+D:\AKASH\RFC PORTAL\bin\System.Web.WebPages.Deployment.dll
+D:\AKASH\RFC PORTAL\bin\System.Web.WebPages.dll
+D:\AKASH\RFC PORTAL\bin\System.Web.WebPages.Razor.dll
+D:\AKASH\RFC PORTAL\bin\WebGrease.dll
+D:\AKASH\RFC PORTAL\bin\System.Web.Helpers.xml
+D:\AKASH\RFC PORTAL\bin\System.Web.Mvc.xml
+D:\AKASH\RFC PORTAL\bin\System.Web.Optimization.xml
+D:\AKASH\RFC PORTAL\bin\System.Web.Razor.xml
+D:\AKASH\RFC PORTAL\bin\System.Web.WebPages.xml
+D:\AKASH\RFC PORTAL\bin\System.Web.WebPages.Deployment.xml
+D:\AKASH\RFC PORTAL\bin\System.Web.WebPages.Razor.xml
+D:\AKASH\RFC PORTAL\bin\Newtonsoft.Json.xml
+D:\AKASH\RFC PORTAL\bin\Antlr3.Runtime.pdb
+D:\AKASH\RFC PORTAL\bin\System.Net.Http.Formatting.xml
+D:\AKASH\RFC PORTAL\bin\System.Web.Http.xml
+D:\AKASH\RFC PORTAL\bin\System.Web.Http.WebHost.xml
+D:\AKASH\RFC PORTAL\bin\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.xml
+D:\AKASH\RFC PORTAL\obj\Debug\RFC PORTAL.csproj.AssemblyReference.cache
+D:\AKASH\RFC PORTAL\obj\Debug\RFC PORTAL.csproj.CoreCompileInputs.cache
+D:\AKASH\RFC PORTAL\obj\Debug\RFC PORTAL.csproj.Up2Date
+D:\AKASH\RFC PORTAL\obj\Debug\RFC PORTAL.dll
+D:\AKASH\RFC PORTAL\obj\Debug\RFC PORTAL.pdb
+D:\AKASH\RFC PORTAL\bin\Snowflake.Data.dll
+D:\AKASH\RFC PORTAL\bin\System.Threading.Tasks.Extensions.dll
+D:\AKASH\RFC PORTAL\bin\System.Memory.dll
+D:\AKASH\RFC PORTAL\bin\System.Numerics.Vectors.dll
+D:\AKASH\RFC PORTAL\bin\System.Buffers.dll

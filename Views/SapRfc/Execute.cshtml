@@ -1,0 +1,283 @@
+@{
+    ViewBag.Title = "Execute RFC";
+    var rfcId = ViewBag.RfcId;
+}
+
+<div class="page-header d-flex align-items-center gap-3">
+    <a href="@Url.Action("Detail", "SapRfc", new { id = ViewBag.RfcId })" class="btn btn-sm btn-outline">&larr; Back</a>
+    <div>
+        <h2>Execute RFC</h2>
+        <p>Manual execution trigger</p>
+    </div>
+</div>
+
+<!-- RFC Info Card -->
+<div class="card-panel" id="rfcInfoCard">
+    <div class="card-header">RFC Information</div>
+    <div class="card-body" id="rfcInfoBody">
+        <div class="loading-spinner">Loading...</div>
+    </div>
+</div>
+
+<!-- Execution Form -->
+<div class="card-panel" id="execFormCard">
+    <div class="card-header">Execution Parameters</div>
+    <div class="card-body">
+        <form id="execForm">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label" style="font-size:0.8rem;font-weight:600;color:var(--gray-600);">Environment</label>
+                    <select class="form-control form-control-sm" id="exec_Environment">
+                        <option value="PROD">PROD</option>
+                        <option value="UAT">UAT</option>
+                    </select>
+                </div>
+                <div class="col-md-4" id="dateFromGroup" style="display:none;">
+                    <label class="form-label" style="font-size:0.8rem;font-weight:600;color:var(--gray-600);">Date From</label>
+                    <input type="date" class="form-control form-control-sm" id="exec_DateFrom" />
+                </div>
+                <div class="col-md-4" id="dateToGroup" style="display:none;">
+                    <label class="form-label" style="font-size:0.8rem;font-weight:600;color:var(--gray-600);">Date To</label>
+                    <input type="date" class="form-control form-control-sm" id="exec_DateTo" />
+                </div>
+                <div class="col-md-4" id="storeFilterGroup" style="display:none;">
+                    <label class="form-label" style="font-size:0.8rem;font-weight:600;color:var(--gray-600);">Store Filter</label>
+                    <input type="text" class="form-control form-control-sm" id="exec_StoreFilter" placeholder="e.g. 1001,1002,1003" />
+                    <small style="font-size:0.72rem;color:var(--gray-600);">Comma-separated store codes</small>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" style="font-size:0.8rem;font-weight:600;color:var(--gray-600);">Write Mode</label>
+                    <select class="form-control form-control-sm" id="exec_WriteMode">
+                        <option value="Append" selected>Append</option>
+                        <option value="Overwrite">Overwrite</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button type="button" class="btn btn-primary" id="btnExecute">Execute RFC</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Execution Status Panel -->
+<div class="card-panel" id="statusPanel" style="display:none;">
+    <div class="card-header">
+        <span>Execution Status</span>
+        <span id="statusBadge"></span>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-label">Status</div>
+                    <div class="kpi-value" id="st_Status" style="font-size:1.25rem;">-</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-label">Duration</div>
+                    <div class="kpi-value" id="st_Duration" style="font-size:1.25rem;">-</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-label">Records Pulled</div>
+                    <div class="kpi-value" id="st_RecordsPulled" style="font-size:1.25rem;">0</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="kpi-card">
+                    <div class="kpi-label">Records Pushed</div>
+                    <div class="kpi-value" id="st_RecordsPushed" style="font-size:1.25rem;">0</div>
+                </div>
+            </div>
+        </div>
+        <div id="st_ProgressRow" class="mt-3" style="display:none;">
+            <div style="font-size:0.85rem;color:var(--gray-600);margin-bottom:0.5rem;">
+                Progress: <strong id="st_ProgressText">-</strong>
+            </div>
+            <div style="background:var(--gray-100);border-radius:6px;height:8px;overflow:hidden;">
+                <div id="st_ProgressBar" style="height:100%;background:var(--primary);border-radius:6px;transition:width 0.5s;width:0%;"></div>
+            </div>
+        </div>
+        <div id="st_ErrorRow" class="mt-3" style="display:none;">
+            <div style="background:#fce8e6;border:1px solid #f5c6cb;border-radius:8px;padding:0.75rem 1rem;color:#c5221f;font-size:0.85rem;">
+                <strong>Error:</strong> <span id="st_ErrorMsg"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+<style>
+    .rfc-info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 1rem; }
+    .rfc-info-item .info-label { font-size: 0.72rem; font-weight: 600; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.3px; }
+    .rfc-info-item .info-value { font-size: 0.9rem; color: var(--gray-900); margin-top: 0.15rem; }
+    @@media (max-width: 768px) {
+        .rfc-info-grid { grid-template-columns: 1fr 1fr; }
+    }
+</style>
+<script>
+    var rfcId = @rfcId;
+    var rfcData = null;
+    var currentRunId = null;
+    var pollTimer = null;
+    var durationTimer = null;
+    var durationStart = null;
+
+    $(function () {
+        loadRfcInfo();
+        $('#btnExecute').on('click', executeRfc);
+    });
+
+    // --- Load RFC Info ---
+    function loadRfcInfo() {
+        apiGet('/api/rfc/master/' + rfcId, function (d) {
+            rfcData = d;
+            var html = '<div class="rfc-info-grid">';
+            html += infoItem('RFC Code', d.RFC_CODE);
+            html += infoItem('Display Name', d.DISPLAY_NAME);
+            html += infoItem('Execution Pattern', d.EXECUTION_PATTERN);
+            html += infoItem('Target Table', d.TARGET_TABLE);
+            html += '</div>';
+            $('#rfcInfoBody').html(html);
+
+            // Show/hide conditional fields based on execution pattern
+            var pattern = (d.EXECUTION_PATTERN || '').toLowerCase();
+            if (pattern === 'perdate' || pattern === 'perstore' || pattern === 'perdatestore') {
+                $('#dateFromGroup, #dateToGroup').show();
+            }
+            if (pattern === 'perstore' || pattern === 'perdatestore') {
+                $('#storeFilterGroup').show();
+            }
+
+            // Set default write mode from RFC config
+            if (d.WRITE_MODE) {
+                $('#exec_WriteMode').val(d.WRITE_MODE);
+            }
+        });
+    }
+
+    function infoItem(label, value) {
+        return '<div class="rfc-info-item"><div class="info-label">' + label + '</div><div class="info-value">' + (value || '-') + '</div></div>';
+    }
+
+    // --- Execute RFC ---
+    function executeRfc() {
+        if (!confirm('Are you sure you want to execute this RFC?')) return;
+
+        var payload = {
+            Environment: $('#exec_Environment').val(),
+            DateFrom: $('#exec_DateFrom').val() || null,
+            DateTo: $('#exec_DateTo').val() || null,
+            StoreFilter: $('#exec_StoreFilter').val() || null,
+            WriteMode: $('#exec_WriteMode').val(),
+            TriggeredBy: 'portal_user'
+        };
+
+        $('#btnExecute').prop('disabled', true).text('Executing...');
+
+        apiPost('/api/rfc/execution/execute/' + rfcId, payload, function (d) {
+            if (d.success && d.runId) {
+                currentRunId = d.runId;
+                showToast(d.message || 'Execution started', 'success');
+                showStatusPanel('Queued');
+                startPolling();
+                startDurationTimer();
+            } else {
+                showToast('Execution failed to start', 'error');
+                $('#btnExecute').prop('disabled', false).text('Execute RFC');
+            }
+        });
+    }
+
+    // --- Status Panel ---
+    function showStatusPanel(status) {
+        $('#statusPanel').slideDown(300);
+        updateStatusDisplay({ STATUS: status, TOTAL_RECORDS_PULLED: 0, TOTAL_RECORDS_PUSHED: 0, TOTAL_ITEMS: 0, PROCESSED_ITEMS: 0 });
+    }
+
+    function updateStatusDisplay(data) {
+        var status = data.STATUS || data.Status || '-';
+        $('#st_Status').html(statusBadge(status));
+        $('#statusBadge').html(statusBadge(status));
+
+        var pulled = data.TOTAL_RECORDS_PULLED || data.TotalRecordsPulled || 0;
+        var pushed = data.TOTAL_RECORDS_PUSHED || data.TotalRecordsPushed || 0;
+        $('#st_RecordsPulled').text(formatNumber(pulled));
+        $('#st_RecordsPushed').text(formatNumber(pushed));
+
+        var durationSec = data.DURATION_SEC || data.DurationSec;
+        if (durationSec) {
+            $('#st_Duration').text(formatDuration(durationSec));
+        }
+
+        // Progress
+        var total = data.TOTAL_ITEMS || data.TotalItems || 0;
+        var processed = data.PROCESSED_ITEMS || data.ProcessedItems || 0;
+        if (total > 0) {
+            $('#st_ProgressRow').show();
+            $('#st_ProgressText').text('Processing ' + processed + ' of ' + total + ' items');
+            var pct = Math.round((processed / total) * 100);
+            $('#st_ProgressBar').css('width', pct + '%');
+        }
+
+        // Error
+        var err = data.ERROR_MESSAGE || data.ErrorMessage;
+        if (err) {
+            $('#st_ErrorRow').show();
+            $('#st_ErrorMsg').text(err);
+        } else {
+            $('#st_ErrorRow').hide();
+        }
+
+        // If terminal state, stop polling
+        if (status === 'Success' || status === 'Failed') {
+            stopPolling();
+            stopDurationTimer();
+            $('#btnExecute').prop('disabled', false).text('Execute RFC');
+            if (status === 'Success') {
+                showToast('Execution completed successfully', 'success');
+            } else {
+                showToast('Execution failed' + (err ? ': ' + err : ''), 'error');
+            }
+        }
+    }
+
+    // --- Polling ---
+    function startPolling() {
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(function () {
+            if (!currentRunId) return;
+            apiGet('/api/rfc/execution/' + encodeURIComponent(currentRunId) + '/status', function (data) {
+                updateStatusDisplay(data);
+            });
+        }, 3000);
+    }
+
+    function stopPolling() {
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
+    }
+
+    // --- Duration Timer ---
+    function startDurationTimer() {
+        durationStart = new Date();
+        if (durationTimer) clearInterval(durationTimer);
+        durationTimer = setInterval(function () {
+            var elapsed = Math.floor((new Date() - durationStart) / 1000);
+            $('#st_Duration').text(formatDuration(elapsed));
+        }, 1000);
+    }
+
+    function stopDurationTimer() {
+        if (durationTimer) {
+            clearInterval(durationTimer);
+            durationTimer = null;
+        }
+    }
+</script>
+}

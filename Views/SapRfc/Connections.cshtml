@@ -1,0 +1,310 @@
+@{
+    ViewBag.Title = "SAP Connections";
+}
+
+<div class="page-header d-flex justify-content-between align-items-start">
+    <div>
+        <h2>SAP Connections</h2>
+        <p>Manage SAP system connection configurations</p>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Add Connection</button>
+</div>
+
+<!-- Connection Cards -->
+<div class="row g-3" id="connectionsGrid">
+    <div class="col-12">
+        <div class="loading-spinner">Loading connections...</div>
+    </div>
+</div>
+
+<!-- Edit / Add Modal -->
+<div class="modal-overlay" id="connModal">
+    <div class="modal-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+            <h5 style="margin:0;font-weight:600;" id="modalTitle">Edit Connection</h5>
+            <button style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--gray-600);" onclick="closeModal()">&times;</button>
+        </div>
+        <form id="connForm" onsubmit="return saveConnection(event);">
+            <input type="hidden" id="frmId" />
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" style="font-size:0.8rem;font-weight:600;color:var(--gray-600);">Connection Name</label>
+                    <input type="text" class="form-control" id="frmName" required
+                           style="font-size:0.85rem;border-radius:6px;border:1px solid var(--gray-200);padding:0.5rem 0.75rem;" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" style="font-size:0.8rem;font-weight:600;color:var(--gray-600);">App Server Host</label>
+                    <input type="text" class="form-control" id="frmHost" required
+                           style="font-size:0.85rem;border-radius:6px;border:1px solid var(--gray-200);padding:0.5rem 0.75rem;" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" style="font-size:0.8rem;font-weight:600;color:var(--gray-600);">Client</label>
+                    <input type="text" class="form-control" id="frmClient" required placeholder="e.g. 100"
+                           style="font-size:0.85rem;border-radius:6px;border:1px solid var(--gray-200);padding:0.5rem 0.75rem;" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" style="font-size:0.8rem;font-weight:600;color:var(--gray-600);">System Number</label>
+                    <input type="text" class="form-control" id="frmSysNr" required placeholder="e.g. 00"
+                           style="font-size:0.85rem;border-radius:6px;border:1px solid var(--gray-200);padding:0.5rem 0.75rem;" />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" style="font-size:0.8rem;font-weight:600;color:var(--gray-600);">Language</label>
+                    <input type="text" class="form-control" id="frmLang" placeholder="EN"
+                           style="font-size:0.85rem;border-radius:6px;border:1px solid var(--gray-200);padding:0.5rem 0.75rem;" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" style="font-size:0.8rem;font-weight:600;color:var(--gray-600);">User</label>
+                    <input type="text" class="form-control" id="frmUser" required
+                           style="font-size:0.85rem;border-radius:6px;border:1px solid var(--gray-200);padding:0.5rem 0.75rem;" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" style="font-size:0.8rem;font-weight:600;color:var(--gray-600);">Password</label>
+                    <input type="password" class="form-control" id="frmPassword" placeholder="Leave blank to keep existing"
+                           style="font-size:0.85rem;border-radius:6px;border:1px solid var(--gray-200);padding:0.5rem 0.75rem;" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" style="font-size:0.8rem;font-weight:600;color:var(--gray-600);">Environment</label>
+                    <select class="form-control" id="frmEnv" required
+                            style="font-size:0.85rem;border-radius:6px;border:1px solid var(--gray-200);padding:0.5rem 0.75rem;">
+                        <option value="">-- Select --</option>
+                        <option value="PROD">PROD</option>
+                        <option value="UAT">UAT</option>
+                        <option value="DEV">DEV</option>
+                        <option value="QA">QA</option>
+                    </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                    <div class="form-check" style="padding-bottom:0.5rem;">
+                        <input type="checkbox" class="form-check-input" id="frmActive" checked />
+                        <label class="form-check-label" for="frmActive" style="font-size:0.85rem;">Active</label>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top:1.25rem;display:flex;justify-content:flex-end;gap:0.5rem;">
+                <button type="button" class="btn btn-sm btn-outline" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-sm" id="btnSave">Save Connection</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section scripts {
+<style>
+    .conn-card {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid var(--gray-200);
+        padding: 1.25rem;
+        transition: box-shadow 0.15s;
+        height: 100%;
+    }
+    .conn-card:hover { box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
+    .conn-card .conn-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+    .conn-card .conn-name {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--gray-900);
+        margin: 0;
+    }
+    .conn-card .conn-detail {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        font-size: 0.82rem;
+    }
+    .conn-card .conn-detail .detail-label {
+        color: var(--gray-600);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .conn-card .conn-detail .detail-value {
+        color: var(--gray-800);
+        margin-bottom: 0.4rem;
+    }
+    .conn-card .conn-footer {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--gray-100);
+        display: flex;
+        justify-content: flex-end;
+    }
+    .badge-env-prod { background: #fce8e6; color: #c5221f; }
+    .badge-env-uat { background: #fef7e0; color: #b05a00; }
+    .badge-env-dev { background: #e8f0fe; color: #1967d2; }
+    .badge-env-qa { background: #e6f4ea; color: #137333; }
+    .active-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 0.35rem;
+        vertical-align: middle;
+    }
+    .active-dot.on { background: var(--success); }
+    .active-dot.off { background: var(--gray-200); }
+</style>
+<script>
+    var connections = [];
+
+    $(function () {
+        loadConnections();
+    });
+
+    function loadConnections() {
+        $('#connectionsGrid').html('<div class="col-12"><div class="loading-spinner">Loading connections...</div></div>');
+
+        apiGet('/api/rfc/connections', function (data) {
+            connections = data || [];
+
+            if (connections.length === 0) {
+                $('#connectionsGrid').html('<div class="col-12"><div class="empty-state">'
+                    + '<div class="empty-icon">&#9889;</div>'
+                    + '<p>No connections configured</p>'
+                    + '<button class="btn btn-primary btn-sm" onclick="openAddModal()">Add your first connection</button>'
+                    + '</div></div>');
+                return;
+            }
+
+            var html = '';
+            $.each(connections, function (i, c) {
+                var isActive = c.IS_ACTIVE === true || c.IS_ACTIVE === 'true' || c.IS_ACTIVE === 'True';
+                html += '<div class="col-md-6 col-lg-4">';
+                html += '  <div class="conn-card">';
+                html += '    <div class="conn-header">';
+                html += '      <div>';
+                html += '        <h5 class="conn-name">' + escapeHtml(c.CONNECTION_NAME || '-') + '</h5>';
+                html += '        <span style="font-size:0.8rem;color:var(--gray-600);">';
+                html += '          <span class="active-dot ' + (isActive ? 'on' : 'off') + '"></span>';
+                html += '          ' + (isActive ? 'Active' : 'Inactive');
+                html += '        </span>';
+                html += '      </div>';
+                html += '      ' + envBadge(c.ENVIRONMENT);
+                html += '    </div>';
+                html += '    <div class="conn-detail">';
+                html += '      <div><div class="detail-label">Host</div><div class="detail-value">' + escapeHtml(c.APP_SERVER_HOST || '-') + '</div></div>';
+                html += '      <div><div class="detail-label">Client</div><div class="detail-value">' + escapeHtml(c.CLIENT || '-') + '</div></div>';
+                html += '      <div><div class="detail-label">System Number</div><div class="detail-value">' + escapeHtml(c.SYSTEM_NUMBER || '-') + '</div></div>';
+                html += '      <div><div class="detail-label">User</div><div class="detail-value">' + escapeHtml(c.RFC_USER || '-') + '</div></div>';
+                html += '      <div><div class="detail-label">Password</div><div class="detail-value">********</div></div>';
+                html += '      <div><div class="detail-label">Language</div><div class="detail-value">' + escapeHtml(c.LANGUAGE || 'EN') + '</div></div>';
+                html += '    </div>';
+                html += '    <div class="conn-footer">';
+                html += '      <button class="btn btn-sm btn-outline" onclick="openEditModal(' + c.ID + ')">&#9998; Edit</button>';
+                html += '    </div>';
+                html += '  </div>';
+                html += '</div>';
+            });
+            $('#connectionsGrid').html(html);
+        });
+    }
+
+    function envBadge(env) {
+        var cls = { 'PROD': 'prod', 'UAT': 'uat', 'DEV': 'dev', 'QA': 'qa' };
+        return '<span class="badge-status badge-env-' + (cls[env] || 'dev') + '">' + (env || '-') + '</span>';
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    function openAddModal() {
+        $('#modalTitle').text('Add Connection');
+        $('#frmId').val('');
+        $('#frmName').val('');
+        $('#frmHost').val('');
+        $('#frmClient').val('');
+        $('#frmSysNr').val('');
+        $('#frmLang').val('EN');
+        $('#frmUser').val('');
+        $('#frmPassword').val('').attr('placeholder', 'Enter password');
+        $('#frmEnv').val('');
+        $('#frmActive').prop('checked', true);
+        $('#connModal').addClass('show');
+    }
+
+    function openEditModal(id) {
+        var conn = null;
+        $.each(connections, function (i, c) {
+            if (c.ID === id) { conn = c; return false; }
+        });
+        if (!conn) return;
+
+        $('#modalTitle').text('Edit Connection');
+        $('#frmId').val(conn.ID);
+        $('#frmName').val(conn.CONNECTION_NAME);
+        $('#frmHost').val(conn.APP_SERVER_HOST);
+        $('#frmClient').val(conn.CLIENT);
+        $('#frmSysNr').val(conn.SYSTEM_NUMBER);
+        $('#frmLang').val(conn.LANGUAGE || 'EN');
+        $('#frmUser').val(conn.RFC_USER);
+        $('#frmPassword').val('').attr('placeholder', 'Leave blank to keep existing');
+        $('#frmEnv').val(conn.ENVIRONMENT);
+        $('#frmActive').prop('checked', conn.IS_ACTIVE === true || conn.IS_ACTIVE === 'true' || conn.IS_ACTIVE === 'True');
+        $('#connModal').addClass('show');
+    }
+
+    function closeModal() {
+        $('#connModal').removeClass('show');
+    }
+
+    function saveConnection(e) {
+        e.preventDefault();
+
+        var id = $('#frmId').val();
+        var payload = {
+            ConnectionName: $('#frmName').val().trim(),
+            AppServerHost: $('#frmHost').val().trim(),
+            Client: $('#frmClient').val().trim(),
+            SystemNumber: $('#frmSysNr').val().trim(),
+            Language: $('#frmLang').val().trim() || 'EN',
+            User: $('#frmUser').val().trim(),
+            Environment: $('#frmEnv').val(),
+            IsActive: $('#frmActive').is(':checked')
+        };
+
+        var password = $('#frmPassword').val();
+        if (password) {
+            payload.Password = password;
+        }
+
+        if (id) {
+            // Update existing
+            apiPut('/api/rfc/connections/' + id, payload, function () {
+                showToast('Connection updated successfully', 'success');
+                closeModal();
+                loadConnections();
+            });
+        } else {
+            // Create new
+            if (!password) {
+                showToast('Password is required for new connections', 'error');
+                return false;
+            }
+            apiPost('/api/rfc/connections', payload, function () {
+                showToast('Connection created successfully', 'success');
+                closeModal();
+                loadConnections();
+            });
+        }
+
+        return false;
+    }
+
+    // Close modal on overlay click
+    $('#connModal').on('click', function (e) {
+        if ($(e.target).hasClass('modal-overlay')) {
+            closeModal();
+        }
+    });
+</script>
+}

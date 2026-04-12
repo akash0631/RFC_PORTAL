@@ -1,0 +1,58 @@
+
+**** Log file opened by process 21076 at 2026-04-12 12:36:16 (UTC+05:30 India Standard Time)
+
+SAP .NET Connector 3.0 with file version 3.0.18.0 running on 64-bit .NET Framework 4.0.30319.42000
+Program: D:\AKASH\RFC PORTAL\RfcWorker\bin\Debug\RfcWorker.exe
+Working directory: D:\AKASH\RFC PORTAL\RfcWorker\bin\Debug
+Operating system: Windows 8  64-bit 
+Processor: 4x AMD64 (or x64)
+SAP release: 721, Kernel release: 721, Kernel patch level: 713
+Hostname: DESKTOP-OIQ02RT, IP address: 192.168.1.9, IP_v6 address: 
+
+Default trace level: None
+
+>> Error entry 2026-04-12 12:36:16.383 [Thread 1]
+Failure to create pool for destination SAP_PROD (ORIGINAL) [NAME=SAP_PROD ASHOST=192.168.144.170 CLIENT=600 SYSNR=02 USER=POWERBI PASSWD=******** LANG=EN]
+SAP.Middleware.Connector.RfcCommunicationException: 
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-OIQ02RT with Unicode
+ERROR       partner '192.168.144.170:3302' not reached
+TIME        Sun Apr 12 12:36:16 2026
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.144.170:3302
+SYSTEM CALL connect
+ERRNO       10060
+ERRNO TEXT  WSAETIMEDOUT: Connection timed out
+COUNTER     2
+
+   at SAP.Middleware.Connector.CpicConnection.ConnectAsClient(Dictionary`2 options, Boolean forRepository)
+   at SAP.Middleware.Connector.RfcConnection.ConnectAsClient(RfcDestination destination, Boolean forRepository)
+   at SAP.Middleware.Connector.RfcConnectionPool..ctor(RfcDestination destination, Boolean forRepositoryCalls)
+>> Error entry 2026-04-12 12:36:16.394 [Thread 1]
+[NAME=SAP_PROD ASHOST=192.168.144.170 CLIENT=600 SYSNR=02 USER=POWERBI PASSWD=******** LANG=EN]
+SAP.Middleware.Connector.RfcCommunicationException: 
+LOCATION    CPIC (TCP/IP) on local host DESKTOP-OIQ02RT with Unicode
+ERROR       partner '192.168.144.170:3302' not reached
+TIME        Sun Apr 12 12:36:16 2026
+RELEASE     721
+COMPONENT   NI (network interface)
+VERSION     40
+RC          -10
+MODULE      nixxi.cpp
+LINE        3283
+DETAIL      NiPConnect2: 192.168.144.170:3302
+SYSTEM CALL connect
+ERRNO       10060
+ERRNO TEXT  WSAETIMEDOUT: Connection timed out
+COUNTER     2
+
+   at SAP.Middleware.Connector.CpicConnection.ConnectAsClient(Dictionary`2 options, Boolean forRepository)
+   at SAP.Middleware.Connector.RfcConnection.ConnectAsClient(RfcDestination destination, Boolean forRepository)
+   at SAP.Middleware.Connector.RfcConnectionPool..ctor(RfcDestination destination, Boolean forRepositoryCalls)
+   at SAP.Middleware.Connector.RfcConnectionPool.GetPool(RfcDestination destination, Boolean forRepository, Boolean create)
+   at SAP.Middleware.Connector.RfcDestination.GetClient(Boolean forRepository)
+   at SAP.Middleware.Connector.RfcDestination.Ping()

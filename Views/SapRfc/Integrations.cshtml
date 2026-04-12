@@ -1,0 +1,381 @@
+@{
+    ViewBag.Title = "RFC Integrations";
+}
+
+<div class="page-header d-flex justify-content-between align-items-start">
+    <div>
+        <h2>RFC Integrations</h2>
+        <p>Manage and monitor all RFC configurations</p>
+    </div>
+    <button class="btn btn-primary" onclick="openAddRfcModal()">
+        &#43; Add New RFC
+    </button>
+</div>
+
+<!-- Add RFC Modal -->
+<div class="modal-overlay" id="addRfcModal">
+    <div class="modal-box" style="min-width:650px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+            <h4 style="margin:0;font-size:1.1rem;">Add New RFC Integration</h4>
+            <button onclick="$('#addRfcModal').removeClass('show')" style="background:none;border:none;font-size:1.25rem;cursor:pointer;">&times;</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="form-group">
+                <label style="font-size:0.8rem;font-weight:600;color:var(--gray-600);display:block;margin-bottom:0.25rem;">RFC Code *</label>
+                <input type="text" id="addRfcCode" placeholder="e.g. RFC_NEW_DATA" style="width:100%;padding:0.5rem;border:1px solid var(--gray-200);border-radius:6px;" />
+            </div>
+            <div class="form-group">
+                <label style="font-size:0.8rem;font-weight:600;color:var(--gray-600);display:block;margin-bottom:0.25rem;">Function Name *</label>
+                <input type="text" id="addFuncName" placeholder="e.g. ZPBI_NEW_DATA" style="width:100%;padding:0.5rem;border:1px solid var(--gray-200);border-radius:6px;" />
+            </div>
+            <div class="form-group" style="grid-column:span 2;">
+                <label style="font-size:0.8rem;font-weight:600;color:var(--gray-600);display:block;margin-bottom:0.25rem;">Display Name *</label>
+                <input type="text" id="addDisplayName" placeholder="Human-readable name" style="width:100%;padding:0.5rem;border:1px solid var(--gray-200);border-radius:6px;" />
+            </div>
+            <div class="form-group">
+                <label style="font-size:0.8rem;font-weight:600;color:var(--gray-600);display:block;margin-bottom:0.25rem;">Department</label>
+                <select id="addDept" style="width:100%;padding:0.5rem;border:1px solid var(--gray-200);border-radius:6px;">
+                    <option value="">Select...</option>
+                    <option>Finance</option><option>GRC</option><option>Inventory</option>
+                    <option>Master Data</option><option>Purchase</option><option>Sales</option>
+                    <option>Store Ops</option><option>Warehouse</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label style="font-size:0.8rem;font-weight:600;color:var(--gray-600);display:block;margin-bottom:0.25rem;">SAP Module</label>
+                <select id="addModule" style="width:100%;padding:0.5rem;border:1px solid var(--gray-200);border-radius:6px;">
+                    <option value="">Select...</option>
+                    <option>FI</option><option>MM</option><option>SD</option><option>WM</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label style="font-size:0.8rem;font-weight:600;color:var(--gray-600);display:block;margin-bottom:0.25rem;">Target Table *</label>
+                <input type="text" id="addTargetTable" placeholder="e.g. ET_NEW_DATA" style="width:100%;padding:0.5rem;border:1px solid var(--gray-200);border-radius:6px;" />
+            </div>
+            <div class="form-group">
+                <label style="font-size:0.8rem;font-weight:600;color:var(--gray-600);display:block;margin-bottom:0.25rem;">Execution Pattern</label>
+                <select id="addPattern" style="width:100%;padding:0.5rem;border:1px solid var(--gray-200);border-radius:6px;">
+                    <option value="PerDate">PerDate</option>
+                    <option value="PerStore">PerStore</option>
+                    <option value="Single">Single</option>
+                </select>
+            </div>
+            <div class="form-group" style="grid-column:span 2;">
+                <label style="font-size:0.8rem;font-weight:600;color:var(--gray-600);display:block;margin-bottom:0.25rem;">Description</label>
+                <input type="text" id="addDesc" placeholder="Brief description of what this RFC does" style="width:100%;padding:0.5rem;border:1px solid var(--gray-200);border-radius:6px;" />
+            </div>
+        </div>
+        <div style="margin-top:1.5rem;display:flex;gap:0.75rem;justify-content:flex-end;">
+            <button class="btn btn-outline btn-sm" onclick="$('#addRfcModal').removeClass('show')">Cancel</button>
+            <button class="btn btn-primary btn-sm" onclick="saveNewRfc()">Create RFC</button>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar" id="filterBar">
+    <div class="form-group">
+        <label>Search</label>
+        <input type="text" id="fSearch" placeholder="RFC code or name..." style="min-width:180px;" />
+    </div>
+    <div class="form-group">
+        <label>Department</label>
+        <select id="fDept">
+            <option value="">All Departments</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>SAP Module</label>
+        <select id="fModule">
+            <option value="">All Modules</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Status</label>
+        <select id="fStatus">
+            <option value="">All</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Pattern</label>
+        <select id="fPattern">
+            <option value="">All Patterns</option>
+            <option value="PerStore">PerStore</option>
+            <option value="PerDate">PerDate</option>
+            <option value="Single">Single</option>
+        </select>
+    </div>
+    <div class="form-group d-flex gap-2" style="align-self:flex-end;">
+        <button class="btn btn-primary btn-sm" id="btnApply">Apply Filters</button>
+        <button class="btn btn-outline btn-sm" id="btnClear">Clear</button>
+    </div>
+</div>
+
+<!-- Data Table -->
+<div class="card-panel">
+    <div class="card-body" style="padding:0;overflow-x:auto;">
+        <table class="data-table" id="rfcTable">
+            <thead>
+                <tr>
+                    <th data-sort="RfcCode">RFC Code</th>
+                    <th data-sort="DisplayName">Display Name</th>
+                    <th data-sort="Department">Department</th>
+                    <th data-sort="SapModule">SAP Module</th>
+                    <th data-sort="TargetTable">Target Table</th>
+                    <th data-sort="ExecutionPattern">Pattern</th>
+                    <th data-sort="IsActive">Status</th>
+                    <th data-sort="LastRunAt">Last Run</th>
+                    <th data-sort="Owner">Owner</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="rfcBody">
+                <tr>
+                    <td colspan="10" class="loading-spinner">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+<div class="pagination-bar" id="paginationBar">
+    <div id="pageInfo">-</div>
+    <div class="d-flex gap-2" id="pageButtons"></div>
+</div>
+
+@section scripts {
+<style>
+    .data-table thead th.sorted-asc::after { content: ' \25B2'; font-size: 0.65rem; }
+    .data-table thead th.sorted-desc::after { content: ' \25BC'; font-size: 0.65rem; }
+    .action-group { display: flex; gap: 0.25rem; }
+    .toggle-btn { cursor: pointer; }
+    .toggle-btn.active { color: var(--success); }
+    .toggle-btn.inactive { color: var(--gray-600); }
+</style>
+<script>
+    var currentPage = 1;
+    var pageSize = 15;
+    var sortField = 'RfcCode';
+    var sortDir = 'asc';
+
+    $(function () {
+        loadDropdowns();
+        loadData();
+
+        $('#btnApply').on('click', function () {
+            currentPage = 1;
+            loadData();
+        });
+
+        $('#btnClear').on('click', function () {
+            $('#fSearch').val('');
+            $('#fDept').val('');
+            $('#fModule').val('');
+            $('#fStatus').val('');
+            $('#fPattern').val('');
+            currentPage = 1;
+            sortField = 'RfcCode';
+            sortDir = 'asc';
+            $('#rfcTable thead th').removeClass('sorted-asc sorted-desc');
+            loadData();
+        });
+
+        $('#fSearch').on('keydown', function (e) {
+            if (e.key === 'Enter') {
+                currentPage = 1;
+                loadData();
+            }
+        });
+
+        // Column sort
+        $('#rfcTable thead th[data-sort]').on('click', function () {
+            var field = $(this).data('sort');
+            if (sortField === field) {
+                sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortField = field;
+                sortDir = 'asc';
+            }
+            $('#rfcTable thead th').removeClass('sorted-asc sorted-desc');
+            $(this).addClass(sortDir === 'asc' ? 'sorted-asc' : 'sorted-desc');
+            currentPage = 1;
+            loadData();
+        });
+    });
+
+    function loadDropdowns() {
+        apiGet('/api/rfc/master/departments', function (data) {
+            var sel = $('#fDept');
+            $.each(data, function (_, d) {
+                sel.append('<option value="' + d + '">' + d + '</option>');
+            });
+        });
+
+        apiGet('/api/rfc/master/modules', function (data) {
+            var sel = $('#fModule');
+            $.each(data, function (_, m) {
+                sel.append('<option value="' + m + '">' + m + '</option>');
+            });
+        });
+    }
+
+    function buildQueryString() {
+        var params = [];
+        params.push('page=' + currentPage);
+        params.push('pageSize=' + pageSize);
+        params.push('sortBy=' + sortField);
+        params.push('sortDir=' + sortDir);
+
+        var search = $('#fSearch').val().trim();
+        if (search) params.push('search=' + encodeURIComponent(search));
+
+        var dept = $('#fDept').val();
+        if (dept) params.push('department=' + encodeURIComponent(dept));
+
+        var mod = $('#fModule').val();
+        if (mod) params.push('sapModule=' + encodeURIComponent(mod));
+
+        var status = $('#fStatus').val();
+        if (status) params.push('status=' + encodeURIComponent(status));
+
+        var pattern = $('#fPattern').val();
+        if (pattern) params.push('executionPattern=' + encodeURIComponent(pattern));
+
+        return params.join('&');
+    }
+
+    function loadData() {
+        var url = '/api/rfc/master?' + buildQueryString();
+        $('#rfcBody').html('<tr><td colspan="10" class="loading-spinner">Loading...</td></tr>');
+
+        apiGet(url, function (resp) {
+            var items = resp.Items || resp.items || [];
+            var total = resp.TotalCount || resp.totalCount || 0;
+            var totalPages = Math.ceil(total / pageSize) || 1;
+
+            if (items.length === 0) {
+                $('#rfcBody').html('<tr><td colspan="10" class="empty-state"><div class="empty-icon">&#9776;</div><p>No integrations found</p></td></tr>');
+                $('#pageInfo').text('0 results');
+                $('#pageButtons').html('');
+                return;
+            }
+
+            var html = '';
+            $.each(items, function (_, r) {
+                var st = r.STATUS || 'Active';
+                var lastRunHtml = '-';
+                if (r.LAST_RUN_STATUS) {
+                    lastRunHtml = statusBadge(r.LAST_RUN_STATUS);
+                    if (r.LAST_RUN_TIME) lastRunHtml += ' <span style="font-size:0.78rem;color:var(--gray-600);">' + formatDate(r.LAST_RUN_TIME) + '</span>';
+                }
+
+                html += '<tr>';
+                html += '<td><strong>' + (r.RFC_CODE || '-') + '</strong></td>';
+                html += '<td>' + (r.DISPLAY_NAME || '-') + '</td>';
+                html += '<td>' + (r.DEPARTMENT || '-') + '</td>';
+                html += '<td>' + (r.SAP_MODULE || '-') + '</td>';
+                html += '<td><code style="font-size:0.8rem;">' + (r.TARGET_TABLE || '-') + '</code></td>';
+                html += '<td>' + (r.EXECUTION_PATTERN || '-') + '</td>';
+                html += '<td>' + statusBadge(st) + '</td>';
+                html += '<td>' + lastRunHtml + '</td>';
+                html += '<td>' + (r.OWNER || '-') + '</td>';
+                html += '<td>';
+                html += '  <div class="action-group">';
+                html += '    <a href="/SapRfc/Detail/' + r.ID + '" class="action-btn" title="View Detail">&#128269;</a>';
+                html += '    <button class="action-btn toggle-btn ' + (st==='Active' ? 'active' : 'inactive') + '" onclick="toggleRfc(' + r.ID + ')" title="Toggle Status">' + (st==='Active' ? '&#9673;' : '&#9675;') + '</button>';
+                html += '    <a href="/SapRfc/Execute/' + r.ID + '" class="action-btn" title="Execute">&#9654;</a>';
+                html += '  </div>';
+                html += '</td>';
+                html += '</tr>';
+            });
+
+            $('#rfcBody').html(html);
+
+            // Pagination
+            var startItem = (currentPage - 1) * pageSize + 1;
+            var endItem = Math.min(currentPage * pageSize, total);
+            $('#pageInfo').text('Showing ' + startItem + ' - ' + endItem + ' of ' + formatNumber(total) + ' integrations');
+
+            var btnHtml = '';
+            btnHtml += '<button class="page-btn" ' + (currentPage <= 1 ? 'disabled' : '') + ' onclick="goPage(' + (currentPage - 1) + ')">&#8249; Prev</button>';
+
+            var startPage = Math.max(1, currentPage - 2);
+            var endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+            for (var p = startPage; p <= endPage; p++) {
+                btnHtml += '<button class="page-btn ' + (p === currentPage ? 'active' : '') + '" onclick="goPage(' + p + ')">' + p + '</button>';
+            }
+
+            btnHtml += '<button class="page-btn" ' + (currentPage >= totalPages ? 'disabled' : '') + ' onclick="goPage(' + (currentPage + 1) + ')">Next &#8250;</button>';
+            $('#pageButtons').html(btnHtml);
+        });
+    }
+
+    function goPage(p) {
+        currentPage = p;
+        loadData();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleRfc(id) {
+        apiPatch('/api/rfc/master/' + id + '/toggle', function () {
+            showToast('RFC status toggled successfully');
+            loadData();
+        });
+    }
+
+    function openAddRfcModal() {
+        $('#addRfcCode, #addFuncName, #addDisplayName, #addTargetTable, #addDesc').val('');
+        $('#addDept, #addModule').val('');
+        $('#addPattern').val('PerDate');
+        $('#addRfcModal').addClass('show');
+    }
+
+    function saveNewRfc() {
+        var code = $('#addRfcCode').val().trim();
+        var func = $('#addFuncName').val().trim();
+        var name = $('#addDisplayName').val().trim();
+        var target = $('#addTargetTable').val().trim();
+
+        if (!code || !func || !name || !target) {
+            showToast('Please fill all required fields (*)', 'error');
+            return;
+        }
+
+        var payload = {
+            RfcCode: code,
+            RfcFunctionName: func,
+            DisplayName: name,
+            Description: $('#addDesc').val().trim(),
+            Department: $('#addDept').val(),
+            SapModule: $('#addModule').val(),
+            TargetTable: target,
+            ExecutionPattern: $('#addPattern').val(),
+            SapReturnTable: 'ET_DATA',
+            SourceSystem: 'SAP',
+            TargetSystem: 'Snowflake',
+            WriteMode: 'Append',
+            BulkBatchSize: 100000,
+            TimeoutSeconds: 3600,
+            MaxRetry: 0,
+            RetryDelaySec: 30,
+            Status: 'Active',
+            ExecutionType: 'Scheduled',
+            SapConnectionId: 1,
+            CreatedBy: 'portal_user'
+        };
+
+        apiPost('/api/rfc/master', payload, function (d) {
+            if (d.success) {
+                showToast('RFC created successfully');
+                $('#addRfcModal').removeClass('show');
+                loadData();
+            }
+        });
+    }
+</script>
+}

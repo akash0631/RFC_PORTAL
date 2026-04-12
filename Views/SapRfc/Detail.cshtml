@@ -1,0 +1,625 @@
+@{
+    ViewBag.Title = "RFC Detail";
+    var rfcId = ViewBag.RfcId;
+}
+
+<div class="page-header d-flex align-items-center gap-3">
+    <a href="@Url.Action("Integrations", "SapRfc")" class="btn btn-sm btn-outline">&larr; Back</a>
+    <div>
+        <h2 id="pageTitle">RFC Detail</h2>
+        <p id="pageSubtitle">Loading...</p>
+    </div>
+</div>
+
+<!-- Tab Navigation -->
+<div class="tab-nav" id="tabNav">
+    <div class="tab-item active" data-tab="overview">Overview</div>
+    <div class="tab-item" data-tab="configuration">Configuration</div>
+    <div class="tab-item" data-tab="parameters">Parameters</div>
+    <div class="tab-item" data-tab="selectoptions">Select Options</div>
+    <div class="tab-item" data-tab="history">Execution History</div>
+</div>
+
+<!-- Overview Tab -->
+<div class="tab-content" id="tab-overview">
+    <div class="card-panel">
+        <div class="card-header">RFC Metadata</div>
+        <div class="card-body" id="overviewContent">
+            <div class="loading-spinner">Loading...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Configuration Tab -->
+<div class="tab-content" id="tab-configuration" style="display:none;">
+    <div class="card-panel">
+        <div class="card-header">
+            <span>Edit Configuration</span>
+            <button class="btn btn-primary btn-sm" id="btnSaveConfig">Save Changes</button>
+        </div>
+        <div class="card-body" id="configContent">
+            <div class="loading-spinner">Loading...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Parameters Tab -->
+<div class="tab-content" id="tab-parameters" style="display:none;">
+    <div class="card-panel">
+        <div class="card-header">
+            <span>RFC Parameters</span>
+            <button class="btn btn-primary btn-sm" id="btnAddParam">+ Add Parameter</button>
+        </div>
+        <div class="card-body" style="padding:0;">
+            <div id="paramFormRow" style="display:none;padding:1.25rem;border-bottom:1px solid var(--gray-200);background:var(--gray-50);">
+                <div class="row g-2">
+                    <div class="col-md-2">
+                        <label class="form-label" style="font-size:0.75rem;font-weight:600;">Param Name</label>
+                        <input type="text" class="form-control form-control-sm" id="pf_ParamName" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label" style="font-size:0.75rem;font-weight:600;">Type</label>
+                        <select class="form-control form-control-sm" id="pf_ParamType">
+                            <option>Scalar</option>
+                            <option>Table</option>
+                            <option>Structure</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label" style="font-size:0.75rem;font-weight:600;">Data Type</label>
+                        <select class="form-control form-control-sm" id="pf_DataType">
+                            <option>String</option>
+                            <option>Integer</option>
+                            <option>Date</option>
+                            <option>Decimal</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label" style="font-size:0.75rem;font-weight:600;">Default Expression</label>
+                        <input type="text" class="form-control form-control-sm" id="pf_DefaultExpression" />
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label" style="font-size:0.75rem;font-weight:600;">Required</label>
+                        <select class="form-control form-control-sm" id="pf_IsRequired">
+                            <option value="false">No</option>
+                            <option value="true">Yes</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label" style="font-size:0.75rem;font-weight:600;">Display Name</label>
+                        <input type="text" class="form-control form-control-sm" id="pf_DisplayName" />
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label" style="font-size:0.75rem;font-weight:600;">Sort Order</label>
+                        <input type="number" class="form-control form-control-sm" id="pf_SortOrder" value="0" />
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end gap-1">
+                        <button class="btn btn-primary btn-sm" id="btnSaveParam">Save</button>
+                        <button class="btn btn-sm btn-outline" id="btnCancelParam">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <table class="data-table" id="paramTable">
+                <thead>
+                    <tr>
+                        <th>Param Name</th>
+                        <th>Type</th>
+                        <th>Data Type</th>
+                        <th>Default Expression</th>
+                        <th>Required</th>
+                        <th>Display Name</th>
+                        <th>Sort Order</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="paramBody">
+                    <tr><td colspan="8" class="loading-spinner">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Select Options Tab -->
+<div class="tab-content" id="tab-selectoptions" style="display:none;">
+    <div class="card-panel">
+        <div class="card-header">
+            <span>Select Options</span>
+            <button class="btn btn-primary btn-sm" id="btnAddSelOpt">+ Add Select Option</button>
+        </div>
+        <div class="card-body" style="padding:0;">
+            <div id="selOptFormRow" style="display:none;padding:1.25rem;border-bottom:1px solid var(--gray-200);background:var(--gray-50);">
+                <div class="row g-2">
+                    <div class="col-md-2">
+                        <label class="form-label" style="font-size:0.75rem;font-weight:600;">Table Name</label>
+                        <input type="text" class="form-control form-control-sm" id="so_TableName" />
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label" style="font-size:0.75rem;font-weight:600;">Sign</label>
+                        <select class="form-control form-control-sm" id="so_SignValue">
+                            <option>I</option>
+                            <option>E</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label" style="font-size:0.75rem;font-weight:600;">Option</label>
+                        <select class="form-control form-control-sm" id="so_OptionValue">
+                            <option>CP</option>
+                            <option>EQ</option>
+                            <option>BT</option>
+                            <option>NE</option>
+                            <option>GE</option>
+                            <option>LE</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label" style="font-size:0.75rem;font-weight:600;">Value Source</label>
+                        <select class="form-control form-control-sm" id="so_ValueSource">
+                            <option>Loop</option>
+                            <option>Static</option>
+                            <option>Query</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label" style="font-size:0.75rem;font-weight:600;">Static Value</label>
+                        <input type="text" class="form-control form-control-sm" id="so_StaticValue" />
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label" style="font-size:0.75rem;font-weight:600;">Source Query</label>
+                        <input type="text" class="form-control form-control-sm" id="so_SourceQuery" />
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label" style="font-size:0.75rem;font-weight:600;">Loop Column</label>
+                        <input type="text" class="form-control form-control-sm" id="so_LoopColumn" />
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end gap-1">
+                        <button class="btn btn-primary btn-sm" id="btnSaveSelOpt">Save</button>
+                        <button class="btn btn-sm btn-outline" id="btnCancelSelOpt">Cancel</button>
+                    </div>
+                </div>
+            </div>
+            <table class="data-table" id="selOptTable">
+                <thead>
+                    <tr>
+                        <th>Table Name</th>
+                        <th>Sign</th>
+                        <th>Option</th>
+                        <th>Value Source</th>
+                        <th>Static Value</th>
+                        <th>Source Query</th>
+                        <th>Loop Column</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="selOptBody">
+                    <tr><td colspan="8" class="loading-spinner">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Execution History Tab -->
+<div class="tab-content" id="tab-history" style="display:none;">
+    <div class="card-panel">
+        <div class="card-header">Recent Executions</div>
+        <div class="card-body" style="padding:0;">
+            <table class="data-table" id="historyTable">
+                <thead>
+                    <tr>
+                        <th>Run ID</th>
+                        <th>Status</th>
+                        <th>Duration</th>
+                        <th>Records Pulled</th>
+                        <th>Records Pushed</th>
+                        <th>Triggered By</th>
+                        <th>Started</th>
+                    </tr>
+                </thead>
+                <tbody id="historyBody">
+                    <tr><td colspan="7" class="loading-spinner">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+<style>
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .detail-row { display: flex; padding: 0.6rem 0; border-bottom: 1px solid var(--gray-100); }
+    .detail-label { min-width: 180px; font-size: 0.8rem; font-weight: 600; color: var(--gray-600); text-transform: uppercase; letter-spacing: 0.3px; }
+    .detail-value { font-size: 0.875rem; color: var(--gray-900); word-break: break-word; }
+    .config-form .form-label { font-size: 0.8rem; font-weight: 600; color: var(--gray-600); margin-bottom: 0.25rem; }
+    .config-form .form-control, .config-form .form-select { font-size: 0.85rem; border-radius: 6px; border: 1px solid var(--gray-200); }
+    .config-form textarea.form-control { min-height: 60px; }
+</style>
+<script>
+    var rfcId = @rfcId;
+    var rfcData = null;
+    var editingParamId = null;
+    var editingSelOptId = null;
+
+    $(function () {
+        loadRfcData();
+        initTabs();
+    });
+
+    // --- Tab Navigation ---
+    function initTabs() {
+        $('#tabNav').on('click', '.tab-item', function () {
+            var tab = $(this).data('tab');
+            $('#tabNav .tab-item').removeClass('active');
+            $(this).addClass('active');
+            $('.tab-content').hide();
+            $('#tab-' + tab).show();
+
+            if (tab === 'parameters') loadParams();
+            else if (tab === 'selectoptions') loadSelectOptions();
+            else if (tab === 'history') loadHistory();
+        });
+    }
+
+    // --- Load RFC Master Data ---
+    function loadRfcData() {
+        apiGet('/api/rfc/master/' + rfcId, function (d) {
+            rfcData = d;
+            $('#pageTitle').text(d.DISPLAY_NAME || d.RFC_CODE || 'RFC Detail');
+            $('#pageSubtitle').text(d.RFC_CODE + (d.RFC_FUNCTION_NAME ? ' - ' + d.RFC_FUNCTION_NAME : ''));
+            renderOverview(d);
+            renderConfigForm(d);
+        });
+    }
+
+    // --- Overview Tab ---
+    function renderOverview(d) {
+        var fields = [
+            ['RFC Code', d.RFC_CODE],
+            ['Function Name', d.RFC_FUNCTION_NAME],
+            ['Display Name', d.DISPLAY_NAME],
+            ['Description', d.DESCRIPTION],
+            ['Department', d.DEPARTMENT],
+            ['Sub-Department', d.SUB_DEPARTMENT],
+            ['SAP Module', d.SAP_MODULE],
+            ['Source System', d.SOURCE_SYSTEM],
+            ['Target System', d.TARGET_SYSTEM],
+            ['Target Table', d.TARGET_TABLE],
+            ['SAP Return Table', d.SAP_RETURN_TABLE],
+            ['Execution Pattern', d.EXECUTION_PATTERN],
+            ['Loop Source Query', d.LOOP_SOURCE_QUERY],
+            ['Write Mode', d.WRITE_MODE],
+            ['Batch Size', formatNumber(d.BULK_BATCH_SIZE)],
+            ['Timeout (sec)', formatNumber(d.TIMEOUT_SECONDS)],
+            ['Max Retry', d.MAX_RETRY],
+            ['Retry Delay (sec)', d.RETRY_DELAY_SEC],
+            ['Status', statusBadge(d.STATUS)],
+            ['Execution Type', d.EXECUTION_TYPE],
+            ['Schedule', d.SCHEDULE_DESC || d.SCHEDULE_CRON || '-'],
+            ['Owner', d.OWNER],
+            ['SAP Connection ID', d.SAP_CONNECTION_ID],
+            ['Created By', d.CREATED_BY],
+            ['Created Date', formatDate(d.CREATED_DT)],
+            ['Updated By', d.UPDATED_BY],
+            ['Updated Date', formatDate(d.UPDATED_DT)]
+        ];
+
+        var html = '<div class="detail-grid">';
+        $.each(fields, function (i, f) {
+            html += '<div class="detail-row"><div class="detail-label">' + f[0] + '</div><div class="detail-value">' + (f[1] != null ? f[1] : '-') + '</div></div>';
+        });
+        html += '</div>';
+        $('#overviewContent').html(html);
+    }
+
+    // --- Configuration Tab ---
+    function renderConfigForm(d) {
+        var html = '<form class="config-form"><div class="row g-3">';
+        html += cfgField('RFC Code', 'cfg_RfcCode', d.RFC_CODE, 'text', 4);
+        html += cfgField('Function Name', 'cfg_RfcFunctionName', d.RFC_FUNCTION_NAME, 'text', 4);
+        html += cfgField('Display Name', 'cfg_DisplayName', d.DISPLAY_NAME, 'text', 4);
+        html += cfgTextarea('Description', 'cfg_Description', d.DESCRIPTION, 12);
+        html += cfgField('Department', 'cfg_Department', d.DEPARTMENT, 'text', 4);
+        html += cfgField('Sub-Department', 'cfg_SubDepartment', d.SUB_DEPARTMENT, 'text', 4);
+        html += cfgField('SAP Module', 'cfg_SapModule', d.SAP_MODULE, 'text', 4);
+        html += cfgField('Source System', 'cfg_SourceSystem', d.SOURCE_SYSTEM, 'text', 4);
+        html += cfgField('Target System', 'cfg_TargetSystem', d.TARGET_SYSTEM, 'text', 4);
+        html += cfgField('Target Table', 'cfg_TargetTable', d.TARGET_TABLE, 'text', 4);
+        html += cfgField('SAP Return Table', 'cfg_SapReturnTable', d.SAP_RETURN_TABLE, 'text', 4);
+        html += cfgSelect('Execution Pattern', 'cfg_ExecutionPattern', d.EXECUTION_PATTERN, ['Simple', 'PerDate', 'PerStore', 'PerDateStore', 'Custom'], 4);
+        html += cfgTextarea('Loop Source Query', 'cfg_LoopSourceQuery', d.LOOP_SOURCE_QUERY, 12);
+        html += cfgSelect('Write Mode', 'cfg_WriteMode', d.WRITE_MODE, ['Append', 'Overwrite', 'Merge'], 4);
+        html += cfgField('Batch Size', 'cfg_BulkBatchSize', d.BULK_BATCH_SIZE, 'number', 4);
+        html += cfgField('Timeout (sec)', 'cfg_TimeoutSeconds', d.TIMEOUT_SECONDS, 'number', 4);
+        html += cfgField('Max Retry', 'cfg_MaxRetry', d.MAX_RETRY, 'number', 4);
+        html += cfgField('Retry Delay (sec)', 'cfg_RetryDelaySec', d.RETRY_DELAY_SEC, 'number', 4);
+        html += cfgSelect('Status', 'cfg_Status', d.STATUS, ['Active', 'Inactive'], 4);
+        html += cfgSelect('Execution Type', 'cfg_ExecutionType', d.EXECUTION_TYPE, ['Scheduled', 'Manual', 'OnDemand'], 4);
+        html += cfgField('Schedule Cron', 'cfg_ScheduleCron', d.SCHEDULE_CRON, 'text', 4);
+        html += cfgField('Schedule Description', 'cfg_ScheduleDesc', d.SCHEDULE_DESC, 'text', 4);
+        html += cfgField('Owner', 'cfg_Owner', d.OWNER, 'text', 4);
+        html += cfgField('SAP Connection ID', 'cfg_SapConnectionId', d.SAP_CONNECTION_ID, 'number', 4);
+        html += '</div></form>';
+        $('#configContent').html(html);
+    }
+
+    function cfgField(label, id, value, type, col) {
+        return '<div class="col-md-' + col + '"><label class="form-label">' + label + '</label>' +
+               '<input type="' + type + '" class="form-control form-control-sm" id="' + id + '" value="' + (value != null ? String(value).replace(/"/g, '&quot;') : '') + '" /></div>';
+    }
+
+    function cfgTextarea(label, id, value, col) {
+        return '<div class="col-md-' + col + '"><label class="form-label">' + label + '</label>' +
+               '<textarea class="form-control form-control-sm" id="' + id + '">' + (value != null ? $('<span>').text(value).html() : '') + '</textarea></div>';
+    }
+
+    function cfgSelect(label, id, value, options, col) {
+        var html = '<div class="col-md-' + col + '"><label class="form-label">' + label + '</label><select class="form-control form-control-sm" id="' + id + '">';
+        html += '<option value="">-- Select --</option>';
+        $.each(options, function (_, o) {
+            html += '<option value="' + o + '"' + (value === o ? ' selected' : '') + '>' + o + '</option>';
+        });
+        html += '</select></div>';
+        return html;
+    }
+
+    // Save Configuration
+    $('#btnSaveConfig').on('click', function () {
+        var payload = {
+            RfcCode: $('#cfg_RfcCode').val(),
+            RfcFunctionName: $('#cfg_RfcFunctionName').val(),
+            DisplayName: $('#cfg_DisplayName').val(),
+            Description: $('#cfg_Description').val(),
+            Department: $('#cfg_Department').val(),
+            SubDepartment: $('#cfg_SubDepartment').val(),
+            SapModule: $('#cfg_SapModule').val(),
+            SourceSystem: $('#cfg_SourceSystem').val(),
+            TargetSystem: $('#cfg_TargetSystem').val(),
+            TargetTable: $('#cfg_TargetTable').val(),
+            SapReturnTable: $('#cfg_SapReturnTable').val(),
+            ExecutionPattern: $('#cfg_ExecutionPattern').val(),
+            LoopSourceQuery: $('#cfg_LoopSourceQuery').val(),
+            WriteMode: $('#cfg_WriteMode').val(),
+            BulkBatchSize: parseInt($('#cfg_BulkBatchSize').val()) || 0,
+            TimeoutSeconds: parseInt($('#cfg_TimeoutSeconds').val()) || 0,
+            MaxRetry: parseInt($('#cfg_MaxRetry').val()) || 0,
+            RetryDelaySec: parseInt($('#cfg_RetryDelaySec').val()) || 0,
+            Status: $('#cfg_Status').val(),
+            ExecutionType: $('#cfg_ExecutionType').val(),
+            ScheduleCron: $('#cfg_ScheduleCron').val(),
+            ScheduleDesc: $('#cfg_ScheduleDesc').val(),
+            Owner: $('#cfg_Owner').val(),
+            SapConnectionId: parseInt($('#cfg_SapConnectionId').val()) || null,
+            UpdatedBy: 'portal_user'
+        };
+
+        apiPut('/api/rfc/master/' + rfcId, payload, function (d) {
+            showToast('Configuration saved successfully', 'success');
+            loadRfcData();
+        });
+    });
+
+    // --- Parameters Tab ---
+    function loadParams() {
+        apiGet('/api/rfc/' + rfcId + '/params', function (data) {
+            if (!data || data.length === 0) {
+                $('#paramBody').html('<tr><td colspan="8" class="empty-state"><div class="empty-icon">&#9881;</div><p>No parameters defined</p></td></tr>');
+                return;
+            }
+            var html = '';
+            $.each(data, function (i, p) {
+                html += '<tr data-id="' + p.ID + '">';
+                html += '<td>' + (p.PARAM_NAME || '-') + '</td>';
+                html += '<td>' + (p.PARAM_TYPE || '-') + '</td>';
+                html += '<td>' + (p.DATA_TYPE || '-') + '</td>';
+                html += '<td><code>' + (p.DEFAULT_EXPRESSION || '-') + '</code></td>';
+                html += '<td>' + (p.IS_REQUIRED ? 'Yes' : 'No') + '</td>';
+                html += '<td>' + (p.DISPLAY_NAME || '-') + '</td>';
+                html += '<td>' + (p.SORT_ORDER != null ? p.SORT_ORDER : '-') + '</td>';
+                html += '<td>';
+                html += '  <button class="action-btn btn-edit-param" title="Edit">&#9998;</button>';
+                html += '  <button class="action-btn btn-delete-param" title="Delete" style="color:var(--danger);">&#10005;</button>';
+                html += '</td>';
+                html += '</tr>';
+            });
+            $('#paramBody').html(html);
+        });
+    }
+
+    // Add Param
+    $('#btnAddParam').on('click', function () {
+        editingParamId = null;
+        clearParamForm();
+        $('#paramFormRow').slideDown(200);
+    });
+
+    $('#btnCancelParam').on('click', function () {
+        $('#paramFormRow').slideUp(200);
+        editingParamId = null;
+    });
+
+    $('#btnSaveParam').on('click', function () {
+        var payload = {
+            ParamName: $('#pf_ParamName').val(),
+            ParamType: $('#pf_ParamType').val(),
+            DataType: $('#pf_DataType').val(),
+            DefaultExpression: $('#pf_DefaultExpression').val(),
+            IsRequired: $('#pf_IsRequired').val() === 'true',
+            DisplayName: $('#pf_DisplayName').val(),
+            SortOrder: parseInt($('#pf_SortOrder').val()) || 0,
+            RfcId: rfcId
+        };
+
+        if (editingParamId) {
+            apiPut('/api/rfc/params/' + editingParamId, payload, function () {
+                showToast('Parameter updated', 'success');
+                $('#paramFormRow').slideUp(200);
+                editingParamId = null;
+                loadParams();
+            });
+        } else {
+            apiPost('/api/rfc/' + rfcId + '/params', payload, function () {
+                showToast('Parameter added', 'success');
+                $('#paramFormRow').slideUp(200);
+                loadParams();
+            });
+        }
+    });
+
+    // Edit Param
+    $(document).on('click', '.btn-edit-param', function () {
+        var row = $(this).closest('tr');
+        var cells = row.find('td');
+        editingParamId = row.data('id');
+        $('#pf_ParamName').val(cells.eq(0).text().trim());
+        $('#pf_ParamType').val(cells.eq(1).text().trim());
+        $('#pf_DataType').val(cells.eq(2).text().trim());
+        var defExpr = cells.eq(3).find('code').text().trim();
+        $('#pf_DefaultExpression').val(defExpr === '-' ? '' : defExpr);
+        $('#pf_IsRequired').val(cells.eq(4).text().trim() === 'Yes' ? 'true' : 'false');
+        $('#pf_DisplayName').val(cells.eq(5).text().trim() === '-' ? '' : cells.eq(5).text().trim());
+        $('#pf_SortOrder').val(cells.eq(6).text().trim() === '-' ? 0 : cells.eq(6).text().trim());
+        $('#paramFormRow').slideDown(200);
+    });
+
+    // Delete Param
+    $(document).on('click', '.btn-delete-param', function () {
+        var id = $(this).closest('tr').data('id');
+        if (!confirm('Delete this parameter?')) return;
+        apiDelete('/api/rfc/params/' + id, function () {
+            showToast('Parameter deleted', 'success');
+            loadParams();
+        });
+    });
+
+    function clearParamForm() {
+        $('#pf_ParamName, #pf_DefaultExpression, #pf_DisplayName').val('');
+        $('#pf_ParamType').val('Scalar');
+        $('#pf_DataType').val('String');
+        $('#pf_IsRequired').val('false');
+        $('#pf_SortOrder').val('0');
+    }
+
+    // --- Select Options Tab ---
+    function loadSelectOptions() {
+        apiGet('/api/rfc/' + rfcId + '/select-options', function (data) {
+            if (!data || data.length === 0) {
+                $('#selOptBody').html('<tr><td colspan="8" class="empty-state"><div class="empty-icon">&#9881;</div><p>No select options defined</p></td></tr>');
+                return;
+            }
+            var html = '';
+            $.each(data, function (i, s) {
+                html += '<tr data-id="' + s.ID + '">';
+                html += '<td>' + (s.TABLE_NAME || '-') + '</td>';
+                html += '<td>' + (s.SIGN_VALUE || '-') + '</td>';
+                html += '<td>' + (s.OPTION_VALUE || '-') + '</td>';
+                html += '<td>' + (s.VALUE_SOURCE || '-') + '</td>';
+                html += '<td>' + (s.STATIC_VALUE || '-') + '</td>';
+                html += '<td><code>' + (s.SOURCE_QUERY || '-') + '</code></td>';
+                html += '<td>' + (s.LOOP_COLUMN || '-') + '</td>';
+                html += '<td>';
+                html += '  <button class="action-btn btn-edit-selopt" title="Edit">&#9998;</button>';
+                html += '  <button class="action-btn btn-delete-selopt" title="Delete" style="color:var(--danger);">&#10005;</button>';
+                html += '</td>';
+                html += '</tr>';
+            });
+            $('#selOptBody').html(html);
+        });
+    }
+
+    // Add Select Option
+    $('#btnAddSelOpt').on('click', function () {
+        editingSelOptId = null;
+        clearSelOptForm();
+        $('#selOptFormRow').slideDown(200);
+    });
+
+    $('#btnCancelSelOpt').on('click', function () {
+        $('#selOptFormRow').slideUp(200);
+        editingSelOptId = null;
+    });
+
+    $('#btnSaveSelOpt').on('click', function () {
+        var payload = {
+            TableName: $('#so_TableName').val(),
+            SignValue: $('#so_SignValue').val(),
+            OptionValue: $('#so_OptionValue').val(),
+            ValueSource: $('#so_ValueSource').val(),
+            StaticValue: $('#so_StaticValue').val(),
+            SourceQuery: $('#so_SourceQuery').val(),
+            LoopColumn: $('#so_LoopColumn').val(),
+            RfcId: rfcId
+        };
+
+        if (editingSelOptId) {
+            apiPut('/api/rfc/select-options/' + editingSelOptId, payload, function () {
+                showToast('Select option updated', 'success');
+                $('#selOptFormRow').slideUp(200);
+                editingSelOptId = null;
+                loadSelectOptions();
+            });
+        } else {
+            apiPost('/api/rfc/' + rfcId + '/select-options', payload, function () {
+                showToast('Select option added', 'success');
+                $('#selOptFormRow').slideUp(200);
+                loadSelectOptions();
+            });
+        }
+    });
+
+    // Edit Select Option
+    $(document).on('click', '.btn-edit-selopt', function () {
+        var row = $(this).closest('tr');
+        var cells = row.find('td');
+        editingSelOptId = row.data('id');
+        $('#so_TableName').val(cells.eq(0).text().trim() === '-' ? '' : cells.eq(0).text().trim());
+        $('#so_SignValue').val(cells.eq(1).text().trim());
+        $('#so_OptionValue').val(cells.eq(2).text().trim());
+        $('#so_ValueSource').val(cells.eq(3).text().trim());
+        $('#so_StaticValue').val(cells.eq(4).text().trim() === '-' ? '' : cells.eq(4).text().trim());
+        var srcQ = cells.eq(5).find('code').text().trim();
+        $('#so_SourceQuery').val(srcQ === '-' ? '' : srcQ);
+        $('#so_LoopColumn').val(cells.eq(6).text().trim() === '-' ? '' : cells.eq(6).text().trim());
+        $('#selOptFormRow').slideDown(200);
+    });
+
+    // Delete Select Option
+    $(document).on('click', '.btn-delete-selopt', function () {
+        var id = $(this).closest('tr').data('id');
+        if (!confirm('Delete this select option?')) return;
+        apiDelete('/api/rfc/select-options/' + id, function () {
+            showToast('Select option deleted', 'success');
+            loadSelectOptions();
+        });
+    });
+
+    function clearSelOptForm() {
+        $('#so_TableName, #so_StaticValue, #so_SourceQuery, #so_LoopColumn').val('');
+        $('#so_SignValue').val('I');
+        $('#so_OptionValue').val('CP');
+        $('#so_ValueSource').val('Loop');
+    }
+
+    // --- Execution History Tab ---
+    function loadHistory() {
+        apiGet('/api/rfc/execution/logs/rfc/' + rfcId, function (data) {
+            if (!data || data.length === 0) {
+                $('#historyBody').html('<tr><td colspan="7" class="empty-state"><div class="empty-icon">&#9776;</div><p>No execution history</p></td></tr>');
+                return;
+            }
+            var html = '';
+            $.each(data, function (i, r) {
+                html += '<tr>';
+                html += '<td><strong>' + (r.RUN_ID || r.RunId || '-') + '</strong></td>';
+                html += '<td>' + statusBadge(r.STATUS || r.Status) + '</td>';
+                html += '<td>' + formatDuration(r.DURATION_SEC || r.DurationSec) + '</td>';
+                html += '<td>' + formatNumber(r.TOTAL_RECORDS_PULLED || r.TotalRecordsPulled) + '</td>';
+                html += '<td>' + formatNumber(r.TOTAL_RECORDS_PUSHED || r.TotalRecordsPushed) + '</td>';
+                html += '<td>' + (r.TRIGGERED_BY || r.TriggeredBy || '-') + '</td>';
+                html += '<td>' + formatDate(r.STARTED_DT || r.StartedDt) + '</td>';
+                html += '</tr>';
+            });
+            $('#historyBody').html(html);
+        });
+    }
+</script>
+}
