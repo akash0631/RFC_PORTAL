@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -sk https://localhost:44380/api/rfc/dashboard/summary)",
+      "Bash(curl -s http://localhost:62804/api/rfc/dashboard/summary)",
+      "Bash(where nuget:*)",
+      "Bash(dotnet nuget:*)",
+      "Read(//c/Users/V2/.nuget/packages/**)",
+      "Read(//c/Users/V2/.nuget/packages/snowflake.data/**)",
+      "Bash(cp \"C:/Users/V2/.nuget/packages/snowflake.data/2.1.5/lib/net472/Snowflake.Data.dll\" \"D:/AKASH/RFC PORTAL/bin/\")",
+      "Bash(cp \"C:/Users/V2/.nuget/packages/snowflake.data/2.1.5/lib/net472/Snowflake.Data.dll\" \"D:/AKASH/RFC PORTAL/packages/Snowflake.Data.5.4.1/lib/netstandard2.0/Snowflake.Data.dll\")",
+      "Bash(curl -sk https://localhost:44380/api/rfc/master/4)",
+      "Bash(curl -sk \"https://localhost:44380/api/rfc/execution/logs?Page=1&PageSize=5\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -sk \"https://localhost:44380/api/rfc/execution/RFC-20260412-133859/status\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\V2\\.nuget\\packages\\mono.unix\\7.1.0-final.1.21458.1\\lib\\net45",
+      "C:\\Users\\V2\\.nuget\\packages\\log4net\\2.0.12\\lib\\net45",
+      "C:\\Users\\V2\\.nuget\\packages\\snowflake.data\\2.1.5\\lib\\net472"
+    ]
+  }
+}

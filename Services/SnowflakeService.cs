@@ -233,7 +233,15 @@ namespace RFC_PORTAL.Services
             {
                 var param = cmd.CreateParameter();
                 param.ParameterName = p.Key;
-                param.Value = p.Value ?? DBNull.Value;
+                var val = p.Value ?? DBNull.Value;
+                param.Value = val;
+                if (val is string) param.DbType = DbType.String;
+                else if (val is int) param.DbType = DbType.Int32;
+                else if (val is long) param.DbType = DbType.Int64;
+                else if (val is double) param.DbType = DbType.Double;
+                else if (val is decimal) param.DbType = DbType.Decimal;
+                else if (val is bool) param.DbType = DbType.Boolean;
+                else if (val is DateTime) param.DbType = DbType.DateTime;
                 cmd.Parameters.Add(param);
             }
         }

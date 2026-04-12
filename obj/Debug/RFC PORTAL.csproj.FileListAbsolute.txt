@@ -88,3 +88,4 @@ D:\AKASH\RFC PORTAL\bin\System.Threading.Tasks.Extensions.dll
 D:\AKASH\RFC PORTAL\bin\System.Memory.dll
 D:\AKASH\RFC PORTAL\bin\System.Numerics.Vectors.dll
 D:\AKASH\RFC PORTAL\bin\System.Buffers.dll
+D:\AKASH\RFC PORTAL\bin\log4net.dll
