@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "v2-universal-mcp": {
+      "type": "http",
+      "url": "https://universal-mcp.akash-bab.workers.dev/",
+      "headers": {
+        "X-API-Key": "${V2_MCP_API_KEY}",
+        "X-MCP-User": "${V2_MCP_USER}"
+      }
+    }
+  }
+}
